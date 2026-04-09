@@ -1,0 +1,17 @@
+{
+  "name": "com.damdor.finestrio",
+  "version": "1.0.0",
+  "displayName": "Finestrio",
+  "description": "",
+  "unity": "2022.3",
+  "publishConfig": {
+    "registry": "https://upm.pckgs.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damdordev/Finestrio.git"
+  },
+  "dependencies": {
+    "com.damdor.foundation": "1.0.0"
+  }  
+}
