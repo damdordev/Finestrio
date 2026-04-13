@@ -10,7 +10,7 @@ namespace Damdor.Finestrio
         public abstract void Reset();
     }
     
-    internal class PendingTransitionRequest<TWindow> : PendingTransitionRequest where TWindow : IWindow
+    internal class PendingTransitionRequest<TWindow> : PendingTransitionRequest where TWindow : Window
     {
         private ITransitionRequestQueueReceiver receiver;
         private TransitionRequest<TWindow> request;

@@ -11,11 +11,11 @@ namespace Damdor.Finestrio
 
     public class TransitionRequest
     {
-        public static TransitionRequest<TWindow> Of<TWindow>(TransitionType transitionType) where TWindow : IWindow
+        public static TransitionRequest<TWindow> Of<TWindow>(TransitionType transitionType) where TWindow : Window
             => FinestrioInternalHelper.GetTransitionRequest<TWindow>(transitionType);
     }
     
-    public class TransitionRequest<TWindow> : TransitionRequest where TWindow : IWindow
+    public class TransitionRequest<TWindow> : TransitionRequest where TWindow : Window
     {
         internal TransitionType TransitionType { get; private set; }
         internal object Create { get; private set; }

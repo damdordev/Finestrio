@@ -10,7 +10,7 @@ namespace Damdor.Finestrio
         private static readonly Dictionary<Type, List<object>> transitionRequestPool = new();
         private static readonly Dictionary<Type, List<object>> pendingTransitionRequestPool = new();
 
-        public static TransitionRequestSetup<TWindow, TModel> GetTransitionRequestSetup<TWindow, TModel>() where TWindow : IWindow
+        public static TransitionRequestSetup<TWindow, TModel> GetTransitionRequestSetup<TWindow, TModel>() where TWindow : Window
         {
             var type = typeof(TransitionRequestSetup<TWindow, TModel>);
             if (transitionRequestSetupPool.TryGetValue(type, out var list) && list.Count > 0)
@@ -24,7 +24,7 @@ namespace Damdor.Finestrio
         }
 
         public static void ReleaseTransitionRequestSetup<TWindow>(TransitionRequestSetup<TWindow> setup)
-            where TWindow : IWindow
+            where TWindow : Window
         {
             var type = setup.GetType();
             if (!transitionRequestSetupPool.TryGetValue(typeof(TWindow), out var list))
@@ -37,7 +37,7 @@ namespace Damdor.Finestrio
             list.Add(setup);
         }
         
-        public static TransitionRequest<TWindow> GetTransitionRequest<TWindow>(TransitionType transitionType) where TWindow : IWindow
+        public static TransitionRequest<TWindow> GetTransitionRequest<TWindow>(TransitionType transitionType) where TWindow : Window
         {
             var type = typeof(TWindow);
             TransitionRequest<TWindow> request;
@@ -56,7 +56,7 @@ namespace Damdor.Finestrio
             return request;
         }
         
-        public static void ReleaseTransitionRequest<TWindow>(TransitionRequest<TWindow> request) where TWindow : IWindow
+        public static void ReleaseTransitionRequest<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window
         {
             var type = typeof(TWindow);
             if (!transitionRequestPool.TryGetValue(type, out var list))
@@ -68,7 +68,7 @@ namespace Damdor.Finestrio
             list.Add(request);
         }
         
-        public static PendingTransitionRequest<TWindow> GetPendingTransitionRequest<TWindow>() where TWindow : IWindow
+        public static PendingTransitionRequest<TWindow> GetPendingTransitionRequest<TWindow>() where TWindow : Window
         {
             var type = typeof(PendingTransitionRequest<TWindow>);
             PendingTransitionRequest<TWindow> request;

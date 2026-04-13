@@ -4,7 +4,7 @@ namespace Damdor.Finestrio
 {
     public interface ITransitionAnimation
     {
-        UniTask Prepare(IWindow source, IWindow target);
+        UniTask Prepare(Window source, Window target);
         UniTask Play();
     }
 }

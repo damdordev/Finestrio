@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
-    public class TransitionRequestQueue
+    internal class TransitionRequestQueue
     {
         private readonly ITransitionRequestQueueReceiver receiver;
         private readonly CancellationTokenSource cancellationTokenSource = new();
@@ -12,12 +12,12 @@ namespace Damdor.Finestrio
         private readonly Queue<PendingTransitionRequest> pendingRequests = new();
         private PendingTransitionRequest currentRequest;
         
-        public TransitionRequestQueue(ITransitionRequestQueueReceiver receiver)
+        internal TransitionRequestQueue(ITransitionRequestQueueReceiver receiver)
         {
             this.receiver = receiver;
         }
         
-        public UniTask<TWindow> Enqueue<TWindow>(TransitionRequest<TWindow> request) where TWindow : IWindow
+        public UniTask<TWindow> Enqueue<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window
         {
             var pendingRequest = FinestrioInternalHelper.GetPendingTransitionRequest<TWindow>();
             pendingRequest.Setup(receiver, request, cancellationTokenSource.Token, OnRequestFinished);

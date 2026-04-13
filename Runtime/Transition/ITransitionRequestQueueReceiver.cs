@@ -3,9 +3,9 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
-    public interface ITransitionRequestQueueReceiver
+    internal interface ITransitionRequestQueueReceiver
     {
         UniTask<TWindow> ProcessRequest<TWindow>(TransitionRequest<TWindow> request, CancellationToken cancellationToken)
-            where TWindow : IWindow;
+            where TWindow : Window;
     }
 }

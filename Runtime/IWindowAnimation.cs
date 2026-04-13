@@ -12,7 +12,7 @@ namespace Damdor.Finestrio
     
     public interface IWindowAnimation
     {
-        UniTask Prepare(IWindow source, IWindow target);
+        UniTask Prepare(Window source, Window target);
         UniTask Run();
     }
 }
