@@ -37,21 +37,40 @@ namespace Damdor.Finestrio
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            return default;
+            var source = windows.Count > 0 ? windows[^1] : null;
+            var target = await windowSource.Create<TWindow>();
+            windows.Add(target);
+            return target;
         }
         
         private async UniTask<TWindow> ProcessChange<TWindow>(
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            return default;
+            var source = windows.Count > 0 ? windows[^1] : null;
+            var target = await windowSource.Create<TWindow>();
+
+            if (source != null)
+            {
+                windows.Remove(source);
+                windowSource.Destroy(source);
+            }
+            windows.Add(target);
+            return target;
         }
         
         private async UniTask<TWindow> ProcessBack<TWindow>(
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            return default;
+            var source = windows.Count > 0 ? windows[^1] : null;
+            if (source != null)
+            {
+                windows.Remove(source);
+                windowSource.Destroy(source);
+            }
+            
+            return (TWindow) TopWindow;
         }
     }
 }
