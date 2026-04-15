@@ -93,14 +93,11 @@ namespace Damdor.Finestrio
             var target = await windowSource.Create<TWindow>();
             target.IndexOnStack = windows.Count;
 
-            if (source != null)
-            {
-                windows.Remove(source);
-                windowSource.Destroy(source);
-            }
+            if (source != null) windows.Remove(source);
             windows.Add(target);
             
             await SetupAndAnimate(request, source, target, cancellationToken);
+            if (source != null) windowSource.Destroy(source);
             UpdateVisibilities();
             
             return target;
