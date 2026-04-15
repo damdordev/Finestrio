@@ -23,8 +23,9 @@ namespace Damdor.Finestrio
             pendingRequest.Setup(receiver, request, cancellationTokenSource.Token, OnRequestFinished);
             pendingRequests.Enqueue(pendingRequest);
 
+            var result = pendingRequest.Wait();
             TryStartNextRequest();
-            return pendingRequest.Wait();
+            return result;
         }
 
         public void Finish()

@@ -40,14 +40,14 @@ namespace Damdor.Finestrio
             {
                 setupAsync(window, model, cancellationToken);
             }
-
-            if (setupAsync != null)
-            {
-                return setupAsync(window, model, cancellationToken);
-            }
-
+            
             return UniTask.WaitUntil(() => IsRetrieved, cancellationToken: cancellationToken)
-                .ContinueWith(() => setupAsync(window, model, cancellationToken));
+                .ContinueWith(() =>
+                {
+                    if(setupAsync != null) return setupAsync(window, model, cancellationToken);
+                    setup(window, model);
+                    return UniTask.CompletedTask;
+                });
         }
 
         public void Set(TModel model, TransitionRequestModelSetup<TWindow, TModel> setup)

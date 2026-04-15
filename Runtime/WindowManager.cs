@@ -41,8 +41,9 @@ namespace Damdor.Finestrio
             var source = windows.Count > 0 ? windows[^1] : null;
             var target = await windowSource.Create<TWindow>();
             windows.Add(target);
-
+            
             await SetupAndAnimate(request, source, target, cancellationToken);
+            UpdateVisibilities();
             
             return target;
         }
@@ -62,6 +63,7 @@ namespace Damdor.Finestrio
             windows.Add(target);
             
             await SetupAndAnimate(request, source, target, cancellationToken);
+            UpdateVisibilities();
             
             return target;
         }
@@ -72,20 +74,21 @@ namespace Damdor.Finestrio
         {
             var source = windows.Count > 0 ? windows[^1] : null;
             var target = windows.Count > 1 ? (TWindow) windows[^2] : null;
-            if (source != null)
-            {
-                windows.Remove(source);
-                windowSource.Destroy(source);
-            }
+            if (source != null) windows.Remove(source);
             
             await SetupAndAnimate(request, source, target, cancellationToken);
+            
+            if (source != null) windowSource.Destroy(source);
+            UpdateVisibilities();
             
             return (TWindow) TopWindow;
         }
         
         private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
-            where TWindow : Window 
-        {          
+            where TWindow : Window
+        {
+            source?.SetVisible(true);
+            target?.SetVisible(true);
             var animation = GetTransitionAnimation(request, source, target, request.TransitionType);
             await animation.Prepare();
             request.RetrieveAllModels(cancellationToken);
@@ -98,7 +101,17 @@ namespace Damdor.Finestrio
             Window source,
             Window target,
             TransitionType type) where TWindow : Window
-            => new EmptyTransitionAnimation(0f, 1f);
+            => new EmptyTransitionAnimation(0f, 0f);
+
+        private void UpdateVisibilities()
+        {
+            var wasFullscreenWindow = false;
+            for (var i = windows.Count - 1; i >= 0; i--)
+            {
+                windows[i].SetVisible(!wasFullscreenWindow);
+                if (!windows[i].IsTransparent) wasFullscreenWindow = true;
+            }
+        }
 
     }
 }
