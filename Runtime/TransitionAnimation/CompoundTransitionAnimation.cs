@@ -4,8 +4,15 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
+    /// <summary>
+    /// Combines multiple window animations into a single overall transition.
+    /// Used internally to execute the entry animation of the new window and exit animation of the old window concurrently.
+    /// </summary>
     public class CompoundTransitionAnimation : ITransitionAnimation
     {
+        /// <summary>
+        /// Defines how the incoming and outgoing windows are visually layered.
+        /// </summary>
         public WindowOrderInAnimation Order { get; private set; }
 
         private static readonly Stack<CompoundTransitionAnimation> pool = new();
@@ -14,6 +21,14 @@ namespace Damdor.Finestrio
         private IWindowAnimation targetAnimation;
         private readonly List<UniTask> tasks = new();
 
+        /// <summary>
+        /// Combines default animations fetched from the source and target windows based on the provided transition type.
+        /// </summary>
+        /// <param name="source">The outgoing (old) window in the transition.</param>
+        /// <param name="target">The incoming (new) window in the transition.</param>
+        /// <param name="transitionType">The type of transition that dictates which default animations are chosen.</param>
+        /// <param name="order">The required layer ordering during the transition, or Default to auto-calculate.</param>
+        /// <returns>A pooled instance of <see cref="CompoundTransitionAnimation"/> prepared to animate.</returns>
         public static CompoundTransitionAnimation Combine(
             Window source, 
             Window target, 
@@ -27,6 +42,13 @@ namespace Damdor.Finestrio
             );
         }
         
+        /// <summary>
+        /// Combines specified source and target animations into a single transition instance.
+        /// </summary>
+        /// <param name="sourceAnimation">The animation to apply to the outgoing window.</param>
+        /// <param name="targetAnimation">The animation to apply to the incoming window.</param>
+        /// <param name="order">The required layer ordering, or Default to auto-calculate based on the animations provided.</param>
+        /// <returns>A pooled instance of <see cref="CompoundTransitionAnimation"/> prepared to animate.</returns>
         public static CompoundTransitionAnimation Combine(
             IWindowAnimation sourceAnimation,
             IWindowAnimation targetAnimation,
@@ -53,6 +75,10 @@ namespace Damdor.Finestrio
             pool.Push(this);
         }
         
+        /// <summary>
+        /// Initializes all combined animations simultaneously by invoking their <see cref="IWindowAnimation.Prepare"/> methods.
+        /// </summary>
+        /// <returns>A UniTask representing completion of all preparation steps.</returns>
         public UniTask Prepare()
         {
             tasks.Clear();
@@ -62,6 +88,11 @@ namespace Damdor.Finestrio
             return RunTaskList();
         }
 
+        /// <summary>
+        /// Starts all combined animations simultaneously by invoking their <see cref="IWindowAnimation.Play"/> methods.
+        /// Automatically returns to the pool upon completion.
+        /// </summary>
+        /// <returns>A UniTask representing the asynchronous completion of the entire combined transition.</returns>
         public UniTask Play()
         {
             tasks.Clear();
@@ -125,6 +156,5 @@ namespace Damdor.Finestrio
             
             return exitOrder == WindowOrderInAnimation.OldOnTop ? WindowOrderInAnimation.OldOnTop : WindowOrderInAnimation.NewOnTop;
         }
-        
     }
 }

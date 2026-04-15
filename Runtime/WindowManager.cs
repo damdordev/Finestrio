@@ -5,8 +5,26 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
+    /// <summary>
+    /// Central manager responsible for the lifecycle, state, and transition queueing of windows.
+    /// Manages an internal stack of active windows and orchestrates transitions using an <see cref="IWindowSource"/>.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// var windowSource = new AddressableWindowSource(canvasParent);
+    /// var windowManager = new WindowManager(windowSource);
+    /// 
+    /// var request = TransitionRequest.Of&lt;MyWindow&gt;(TransitionType.Add)
+    ///     .Setup(new MyModel(), (w, m) => w.Initialize(m));
+    ///     
+    /// await windowManager.Transite(request);
+    /// </code>
+    /// </example>
     public class WindowManager : ITransitionRequestQueueReceiver
     {
+        /// <summary>
+        /// Retrieves the currently active and topmost window in the stack.
+        /// </summary>
         public Window TopWindow => windows.Count > 0 ? windows[^1] : null;
         
         private readonly List<Window> windows = new();
@@ -14,15 +32,28 @@ namespace Damdor.Finestrio
         private readonly IWindowSource windowSource;
         private readonly TransitionRequestQueue requestQueue;
 
+        /// <summary>
+        /// Instantiates a new WindowManager using the provided factory source for loading and destroying windows.
+        /// </summary>
+        /// <param name="windowSource">The <see cref="IWindowSource"/> implementation configured to locate your specific windows.</param>
         public WindowManager(IWindowSource windowSource)
         {
             requestQueue = new TransitionRequestQueue(this);
             this.windowSource = windowSource;
         }
         
+        /// <summary>
+        /// Enqueues a window transition request to be processed synchronously or asynchronously based on queue state.
+        /// </summary>
+        /// <typeparam name="TWindow">The class extending <see cref="Window"/> targeted by the transition.</typeparam>
+        /// <param name="request">The prepared request containing models, setups, and transition type details.</param>
+        /// <returns>A UniTask resolving to the initialized and visible window instance upon transition completion.</returns>
         public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window 
             => requestQueue.Enqueue(request);
 
+        /// <summary>
+        /// Cancels all pending transition requests in the queue and releases associated resources.
+        /// </summary>
         public void Release()
         {
             requestQueue.Release();
@@ -146,6 +177,5 @@ namespace Damdor.Finestrio
                 if (!windows[i].IsTransparent) wasFullscreenWindow = true;
             }
         }
-
     }
 }

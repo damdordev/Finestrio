@@ -7,19 +7,44 @@ using Object = UnityEngine.Object;
 
 namespace Damdor.Finestrio
 {
+    /// <summary>
+    /// Loads windows from Unity's Resources system by path.
+    /// Decorate your window class with <see cref="WindowInResources"/> or call Register directly.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// [WindowInResources("UI/Popups/MyPopup")]
+    /// public class MyPopup : Window { }
+    /// </code>
+    /// </example>
     public class ResourcesWindowSource : IWindowSource
     {
         private readonly Dictionary<Type, string> typeToPath = new();
         private readonly Transform parent;
 
+        /// <summary>
+        /// Instantiates a new ResourcesWindowSource targeting a specific parent transform in the scene hierarchy.
+        /// </summary>
+        /// <param name="parent">The transform under which newly instantiated window prefabs will reside.</param>
         public ResourcesWindowSource(Transform parent)
         {
             this.parent = parent;
         }
         
+        /// <summary>
+        /// Verifies whether the provided window class type is mapped to a valid Resources path.
+        /// </summary>
+        /// <param name="type">The specific Window Type to query.</param>
+        /// <returns>True if a mapped path exists (either registered manually or via attribute).</returns>
         public bool Support(Type type)
             => UpdateAndGetPath(type) != null;
 
+        /// <summary>
+        /// Synchronously loads a prefab from Resources and instantiates it asynchronously.
+        /// </summary>
+        /// <typeparam name="TWindow">The type of <see cref="Window"/> to spawn.</typeparam>
+        /// <returns>A UniTask returning the attached script instance of the newly spawned window prefab.</returns>
+        /// <exception cref="ArgumentException">Thrown when a registered path is invalid, missing a prefab, or the prefab lacks the appropriate <see cref="Window"/> script component.</exception>
         public UniTask<TWindow> Create<TWindow>() where TWindow : Window
         {
             var path = UpdateAndGetPath(typeof(TWindow));
@@ -29,7 +54,7 @@ namespace Damdor.Finestrio
             }
 
             var mono = Resources.Load<MonoBehaviour>(path);
-            if (path == null)
+            if (mono == null)
             {
                 throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from resource: prefab {path} not found");
             }
@@ -45,11 +70,20 @@ namespace Damdor.Finestrio
             return new UniTask<TWindow>(windowInstance);
         }
 
+        /// <summary>
+        /// Destroys the instantiated GameObject of the provided window immediately.
+        /// </summary>
+        /// <param name="window">The window script attached to the instantiated prefab hierarchy to destroy.</param>
         public void Destroy(Window window)
         {
             Object.Destroy(window.gameObject);
         }
 
+        /// <summary>
+        /// Manually registers a specific <see cref="Window"/> type to a Resources subpath, overriding any class attributes.
+        /// </summary>
+        /// <typeparam name="TWindow">The class extending Window to associate with the resource string.</typeparam>
+        /// <param name="path">The folder path (relative to a 'Resources' directory) to load the prefab from.</param>
         public void Register<TWindow>(string path) where TWindow : Window
         {
             typeToPath[typeof(TWindow)] = path;
@@ -68,6 +102,5 @@ namespace Damdor.Finestrio
             typeToPath[type] = windowInResources.ResourcePath;
             return windowInResources.ResourcePath;
         }
-        
     }
 }
