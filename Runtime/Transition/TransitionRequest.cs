@@ -23,7 +23,7 @@ namespace Damdor.Finestrio
         internal TransitionType TransitionType { get; private set; }
         internal object Create { get; private set; }
         internal object Destroy { get; private set; }
-        internal ITransitionAnimation TransitionAnimation { get; private set; }
+        internal TransitionRequestAnimationGetter<TWindow> GetAnimation { get; private set; }
         
         private TransitionType type;
         private readonly List<TransitionRequestSetup<TWindow>> setup = new();
@@ -88,9 +88,9 @@ namespace Damdor.Finestrio
             return this;
         }
         
-        public TransitionRequest<TWindow> Animation(ITransitionAnimation animation)
+        public TransitionRequest<TWindow> Animation(TransitionRequestAnimationGetter<TWindow> getAnimation)
         {
-            TransitionAnimation = animation;
+            GetAnimation = getAnimation;
             return this;
         }
 
@@ -103,7 +103,7 @@ namespace Damdor.Finestrio
             setup.Clear();
             Create = null;
             Destroy = null;
-            TransitionAnimation = null;
+            GetAnimation = null;
         }
 
         internal void RetrieveAllModels(CancellationToken cancellationToken)

@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
-    public interface ITransitionAnimation
+    public interface IWindowAnimation
     {
         UniTask Prepare();
         UniTask Play();

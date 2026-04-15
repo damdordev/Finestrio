@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -41,6 +42,7 @@ namespace Damdor.Finestrio
             var source = windows.Count > 0 ? windows[^1] : null;
             var target = await windowSource.Create<TWindow>();
             windows.Add(target);
+            target.IndexOnStack = windows.Count;
             
             await SetupAndAnimate(request, source, target, cancellationToken);
             UpdateVisibilities();
@@ -54,6 +56,7 @@ namespace Damdor.Finestrio
         {
             var source = windows.Count > 0 ? windows[^1] : null;
             var target = await windowSource.Create<TWindow>();
+            target.IndexOnStack = windows.Count;
 
             if (source != null)
             {
@@ -90,18 +93,45 @@ namespace Damdor.Finestrio
             source?.SetVisible(true);
             target?.SetVisible(true);
             var animation = GetTransitionAnimation(request, source, target, request.TransitionType);
-            await animation.Prepare();
+            var shouldRevertWindowsForAnimation = animation != null && source != null && target != null &&
+                                      ShouldRevertWindowsForAnimation(request.TransitionType, animation.Order);
+           
+            if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
+            if (animation != null) await animation.Prepare();
             request.RetrieveAllModels(cancellationToken);
             await request.SetupAllModels(target, cancellationToken);
-            await animation.Play();
+            if (animation != null)
+            {
+                await animation.Play();
+            }
+            if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
         }
 
         private ITransitionAnimation GetTransitionAnimation<TWindow>(
             TransitionRequest<TWindow> request,
             Window source,
-            Window target,
-            TransitionType type) where TWindow : Window
-            => new EmptyTransitionAnimation(0f, 0f);
+            TWindow target,
+            TransitionType transitionType) where TWindow : Window
+            => request.GetAnimation != null
+                ? request.GetAnimation(source, target, transitionType)
+                : CompoundTransitionAnimation.Combine(source, target, transitionType);
+
+        private bool ShouldRevertWindowsForAnimation(TransitionType transitionType, WindowOrderInAnimation order)
+            => transitionType switch
+            {
+                TransitionType.Add or TransitionType.Change => order == WindowOrderInAnimation.OldOnTop,
+                TransitionType.Back => order == WindowOrderInAnimation.NewOnTop,
+                _ => throw new ArgumentOutOfRangeException(nameof(transitionType), transitionType, null)
+            };
+
+        private void RevertWindowsForAnimations(Window source, Window target)
+        {
+            var sourceIndex = source.IndexOnStack;
+            var targetIndex = target.IndexOnStack;
+
+            source.IndexOnStack = targetIndex;
+            target.IndexOnStack = sourceIndex;
+        }
 
         private void UpdateVisibilities()
         {
