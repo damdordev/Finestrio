@@ -6,6 +6,7 @@ using System.Reflection;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Object = UnityEngine.Object;
 
 namespace Damdor.Finestrio
 {
@@ -33,17 +34,14 @@ namespace Damdor.Finestrio
             var gameObject = await Addressables.InstantiateAsync(path, parent);
             var window = gameObject.GetComponent<TWindow>();
 
-            if (window == null)
-            {
-                GameObject.Destroy(gameObject);
-                throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from addressable: window not found");
-            }
-            return window;
+            if (window != null) return window;
+            Object.Destroy(gameObject);
+            throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from addressable: window not found");
         }
 
         public void Destroy(Window window)
         {
-            GameObject.Destroy(window.gameObject);
+            Object.Destroy(window.gameObject);
         }
 
         public void Register<TWindow>(string path) where TWindow : Window

@@ -19,11 +19,7 @@ namespace Damdor.Finestrio
         public UniTask<TWindow> Create<TWindow>() where TWindow : Window
         {
             var source = GetWindowSource(typeof(TWindow));
-            if (source == null)
-            {
-                throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");
-            }
-            return source.Create<TWindow>();
+            return source?.Create<TWindow>() ?? throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");
         }
 
         public void Destroy(Window window)

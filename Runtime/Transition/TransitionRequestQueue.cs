@@ -28,7 +28,7 @@ namespace Damdor.Finestrio
             return result;
         }
 
-        public void Finish()
+        public void Release()
         {
             pendingRequests.Clear();
             currentRequest = null;

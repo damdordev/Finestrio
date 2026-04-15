@@ -43,6 +43,7 @@ namespace Damdor.Finestrio
 
         public override void Reset()
         {
+            if(request != null) FinestrioInternalHelper.ReleaseTransitionRequest(request);
             receiver = null;
             request = null;
             onFinish = null;

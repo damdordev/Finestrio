@@ -41,7 +41,7 @@ namespace Damdor.Finestrio
         {
             this.sourceAnimation = sourceAnimation;
             this.targetAnimation = targetAnimation;
-            this.Order = order;
+            Order = order;
             tasks.Clear();
         }
 
@@ -74,9 +74,12 @@ namespace Damdor.Finestrio
         
         private UniTask RunTaskList()
         {
-            if (tasks.Count == 0) return UniTask.CompletedTask;
-            if (tasks.Count == 1) return tasks[0];
-            return UniTask.WhenAll(tasks[0], tasks[1]);
+            return tasks.Count switch
+            {
+                0 => UniTask.CompletedTask,
+                1 => tasks[0],
+                _ => UniTask.WhenAll(tasks[0], tasks[1])
+            };
         }
 
         private static IWindowAnimation GetDefaultSourceAnimation(Window source, TransitionType transitionType)

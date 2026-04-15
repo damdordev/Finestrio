@@ -13,24 +13,22 @@ namespace Damdor.Finestrio
         public static TransitionRequestSetup<TWindow, TModel> GetTransitionRequestSetup<TWindow, TModel>() where TWindow : Window
         {
             var type = typeof(TransitionRequestSetup<TWindow, TModel>);
-            if (transitionRequestSetupPool.TryGetValue(type, out var list) && list.Count > 0)
-            {
-                var setup = list[^1] as TransitionRequestSetup<TWindow, TModel>;
-                list.RemoveAt(list.Count - 1);
-                return setup;
-            }
+            if (!transitionRequestSetupPool.TryGetValue(type, out var list) || list.Count <= 0)
+                return new TransitionRequestSetup<TWindow, TModel>();
             
-            return new TransitionRequestSetup<TWindow, TModel>();
+            var setup = list[^1] as TransitionRequestSetup<TWindow, TModel>;
+            list.RemoveAt(list.Count - 1);
+            return setup;
         }
 
         public static void ReleaseTransitionRequestSetup<TWindow>(TransitionRequestSetup<TWindow> setup)
             where TWindow : Window
         {
             var type = setup.GetType();
-            if (!transitionRequestSetupPool.TryGetValue(typeof(TWindow), out var list))
+            if (!transitionRequestSetupPool.TryGetValue(type, out var list))
             {
                 list = new List<object>();
-                transitionRequestSetupPool[typeof(TWindow)] = list;
+                transitionRequestSetupPool[type] = list;
             }
 
             setup.Reset();

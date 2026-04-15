@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -23,6 +22,11 @@ namespace Damdor.Finestrio
         
         public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window 
             => requestQueue.Enqueue(request);
+
+        public void Release()
+        {
+            requestQueue.Release();
+        }
 
         UniTask<TWindow> ITransitionRequestQueueReceiver.ProcessRequest<TWindow>(
             TransitionRequest<TWindow> request,
@@ -87,7 +91,7 @@ namespace Damdor.Finestrio
             return (TWindow) TopWindow;
         }
         
-        private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
+        private static async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
             where TWindow : Window
         {
             source?.SetVisible(true);
@@ -107,7 +111,7 @@ namespace Damdor.Finestrio
             if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
         }
 
-        private ITransitionAnimation GetTransitionAnimation<TWindow>(
+        private static ITransitionAnimation GetTransitionAnimation<TWindow>(
             TransitionRequest<TWindow> request,
             Window source,
             TWindow target,
@@ -116,7 +120,7 @@ namespace Damdor.Finestrio
                 ? request.GetAnimation(source, target, transitionType)
                 : CompoundTransitionAnimation.Combine(source, target, transitionType);
 
-        private bool ShouldRevertWindowsForAnimation(TransitionType transitionType, WindowOrderInAnimation order)
+        private static bool ShouldRevertWindowsForAnimation(TransitionType transitionType, WindowOrderInAnimation order)
             => transitionType switch
             {
                 TransitionType.Add or TransitionType.Change => order == WindowOrderInAnimation.OldOnTop,
@@ -124,7 +128,7 @@ namespace Damdor.Finestrio
                 _ => throw new ArgumentOutOfRangeException(nameof(transitionType), transitionType, null)
             };
 
-        private void RevertWindowsForAnimations(Window source, Window target)
+        private static void RevertWindowsForAnimations(Window source, Window target)
         {
             var sourceIndex = source.IndexOnStack;
             var targetIndex = target.IndexOnStack;

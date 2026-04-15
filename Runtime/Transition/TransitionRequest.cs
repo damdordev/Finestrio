@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine.Pool;
 
 namespace Damdor.Finestrio
 {
@@ -21,8 +20,6 @@ namespace Damdor.Finestrio
     public class TransitionRequest<TWindow> : TransitionRequest where TWindow : Window
     {
         internal TransitionType TransitionType { get; private set; }
-        internal object Create { get; private set; }
-        internal object Destroy { get; private set; }
         internal TransitionRequestAnimationGetter<TWindow> GetAnimation { get; private set; }
         
         private TransitionType type;
@@ -33,18 +30,6 @@ namespace Damdor.Finestrio
         internal TransitionRequest<TWindow> Type(TransitionType type)
         {
             TransitionType = type;
-            return this;
-        }
-
-        public TransitionRequest<TWindow> CreateParameter<TCreateParameter>(TCreateParameter parameter) where TCreateParameter : class
-        {
-            Create = parameter;
-            return this;
-        }
-        
-        public TransitionRequest<TWindow> DestroyParameter<TDestroyParameter>(TDestroyParameter parameter) where TDestroyParameter : class
-        {
-            Destroy = parameter;
             return this;
         }
 
@@ -101,8 +86,6 @@ namespace Damdor.Finestrio
                 FinestrioInternalHelper.ReleaseTransitionRequestSetup(transitionRequestSetup);
             }
             setup.Clear();
-            Create = null;
-            Destroy = null;
             GetAnimation = null;
         }
 
