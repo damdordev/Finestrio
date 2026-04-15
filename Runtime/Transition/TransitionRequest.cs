@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using UnityEngine.Pool;
 
 namespace Damdor.Finestrio
 {
@@ -101,6 +104,56 @@ namespace Damdor.Finestrio
             Create = null;
             Destroy = null;
             TransitionAnimation = null;
+        }
+
+        internal void RetrieveAllModels(CancellationToken cancellationToken)
+        {
+            foreach (var s in setup)
+            {
+                s.Retrieve(cancellationToken);
+            }
+        }
+        
+        internal UniTask SetupAllModels(TWindow window, CancellationToken cancellationToken)
+        {
+            if (ReadyToSyncSetup())
+            {
+                SetupAllModelsSync(window, cancellationToken);
+                return UniTask.CompletedTask;
+            }
+
+            if (setup.Count == 1)
+            {
+                return setup[0].Setup(window, cancellationToken);
+            }
+            
+            return SetupAllModelsAsync(window, cancellationToken);
+        }
+
+        private void SetupAllModelsSync(TWindow window, CancellationToken cancellationToken)
+        {
+            foreach (var s in setup)
+            {
+                s.Setup(window, cancellationToken).Forget();
+            }
+        }
+
+        private async UniTask SetupAllModelsAsync(TWindow window, CancellationToken cancellationToken)
+        {
+            foreach (var s in setup)
+            {
+                await s.Setup(window, cancellationToken);
+            }
+        }
+
+        private bool ReadyToSyncSetup()
+        {
+            foreach (var s in setup)
+            {
+                if (!s.IsReadyToSyncSetup) return false;
+            }
+
+            return true;
         }
         
     }

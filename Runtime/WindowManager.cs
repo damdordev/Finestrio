@@ -17,6 +17,7 @@ namespace Damdor.Finestrio
         public WindowManager(IWindowSource windowSource)
         {
             requestQueue = new TransitionRequestQueue(this);
+            this.windowSource = windowSource;
         }
         
         public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window 
@@ -40,6 +41,9 @@ namespace Damdor.Finestrio
             var source = windows.Count > 0 ? windows[^1] : null;
             var target = await windowSource.Create<TWindow>();
             windows.Add(target);
+
+            await SetupAndAnimate(request, source, target, cancellationToken);
+            
             return target;
         }
         
@@ -56,6 +60,9 @@ namespace Damdor.Finestrio
                 windowSource.Destroy(source);
             }
             windows.Add(target);
+            
+            await SetupAndAnimate(request, source, target, cancellationToken);
+            
             return target;
         }
         
@@ -64,13 +71,34 @@ namespace Damdor.Finestrio
             CancellationToken cancellationToken) where TWindow : Window
         {
             var source = windows.Count > 0 ? windows[^1] : null;
+            var target = windows.Count > 1 ? (TWindow) windows[^2] : null;
             if (source != null)
             {
                 windows.Remove(source);
                 windowSource.Destroy(source);
             }
             
+            await SetupAndAnimate(request, source, target, cancellationToken);
+            
             return (TWindow) TopWindow;
         }
+        
+        private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
+            where TWindow : Window 
+        {          
+            var animation = GetTransitionAnimation(request, source, target, request.TransitionType);
+            await animation.Prepare();
+            request.RetrieveAllModels(cancellationToken);
+            await request.SetupAllModels(target, cancellationToken);
+            await animation.Play();
+        }
+
+        private ITransitionAnimation GetTransitionAnimation<TWindow>(
+            TransitionRequest<TWindow> request,
+            Window source,
+            Window target,
+            TransitionType type) where TWindow : Window
+            => new EmptyTransitionAnimation(0f, 1f);
+
     }
 }
