@@ -105,17 +105,36 @@ namespace Damdor.Finestrio
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            var source = windows.Count > 0 ? windows[^1] : null;
-            var target = await windowSource.Create<TWindow>();
-            target.IndexOnStack = windows.Count;
+            TWindow target = null;
+            Window source = null;
 
-            if (source != null) windows.Remove(source);
-            windows.Add(target);
-            
-            await SetupAndAnimate(request, source, target, cancellationToken);
-            if (source != null) windowSource.Destroy(source);
-            UpdateVisibilities();
-            
+            try
+            {
+                source = windows.Count > 0 ? windows[^1] : null;
+                target = await windowSource.Create<TWindow>();
+                target.IndexOnStack = windows.Count;
+
+                if (source != null) windows.Remove(source);
+                windows.Add(target);
+
+                await SetupAndAnimate(request, source, target, cancellationToken);
+                if (source != null) windowSource.Destroy(source);
+                UpdateVisibilities();
+            }
+            catch (Exception)
+            {
+                if (target != null)
+                {
+                    windows.Remove(target);
+                    windowSource.Destroy(target);
+                }
+
+                if (source != null) windows.Add(source);
+                UpdateVisibilities();
+
+                throw;
+            }
+
             return target;
         }
         
@@ -123,15 +142,27 @@ namespace Damdor.Finestrio
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            var source = windows.Count > 0 ? windows[^1] : null;
-            var target = windows.Count > 1 ? (TWindow) windows[^2] : null;
-            if (source != null) windows.Remove(source);
-            
-            await SetupAndAnimate(request, source, target, cancellationToken);
-            
-            if (source != null) windowSource.Destroy(source);
-            UpdateVisibilities();
-            
+            Window source = null;
+
+            try
+            {
+                source = windows.Count > 0 ? windows[^1] : null;
+                var target = windows.Count > 1 ? (TWindow)windows[^2] : null;
+                if (source != null) windows.Remove(source);
+
+                await SetupAndAnimate(request, source, target, cancellationToken);
+
+                if (source != null) windowSource.Destroy(source);
+                UpdateVisibilities();
+            }
+            catch (Exception)
+            {
+                if (source != null) windows.Add(source);
+                UpdateVisibilities();
+                
+                throw;
+            }
+
             return (TWindow) TopWindow;
         }
         
