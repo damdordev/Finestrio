@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -26,6 +27,13 @@ namespace Damdor.Finestrio
         /// Retrieves the currently active and topmost window in the stack.
         /// </summary>
         public Window TopWindow => windows.Count > 0 ? windows[^1] : null;
+        
+        /// <summary>
+        /// An optional callback invoked when an exception occurs during window transitions.
+        /// This allows consumers to implement custom error handling or logging logic for transition failures.
+        /// Default behavior (reverting broken transition) will be performed after handler finishes
+        /// </summary>
+        public TransitionErrorHandler ErrorHandler { get; set; }
         
         private readonly List<Window> windows = new();
         
@@ -58,7 +66,7 @@ namespace Damdor.Finestrio
         {
             requestQueue.Release();
         }
-
+        
         UniTask<TWindow> ITransitionRequestQueueReceiver.ProcessRequest<TWindow>(
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken)
@@ -86,8 +94,9 @@ namespace Damdor.Finestrio
                 await SetupAndAnimate(request, source, target, cancellationToken);
                 UpdateVisibilities();
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await HandleException(e, cancellationToken);
                 if (target != null)
                 {
                     windows.Remove(target);
@@ -121,8 +130,9 @@ namespace Damdor.Finestrio
                 if (source != null) windowSource.Destroy(source);
                 UpdateVisibilities();
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await HandleException(e, cancellationToken);
                 if (target != null)
                 {
                     windows.Remove(target);
@@ -155,8 +165,9 @@ namespace Damdor.Finestrio
                 if (source != null) windowSource.Destroy(source);
                 UpdateVisibilities();
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                await HandleException(e, cancellationToken);
                 if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
                 
@@ -165,7 +176,22 @@ namespace Damdor.Finestrio
 
             return (TWindow) TopWindow;
         }
-        
+
+        private async UniTask HandleException(Exception e, CancellationToken cancellationToken)
+        {
+            if (ErrorHandler == null) return;
+
+            try
+            {
+                await ErrorHandler(e, cancellationToken);
+            }
+            catch (Exception e2)
+            {
+                Debug.LogError($"[Finestrio] Error handler failed: {e2}");
+                // ignored
+            }
+        }
+
         private static async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
             where TWindow : Window
         {
@@ -190,7 +216,6 @@ namespace Damdor.Finestrio
             {
                 if (shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
             }
-
         }
 
         private static ITransitionAnimation GetTransitionAnimation<TWindow>(

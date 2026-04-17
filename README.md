@@ -12,6 +12,8 @@
   * [Simple synchronous setup](#simple-synchronous-setup)
 * [Setup](#setup)
   * [Example of synchronous and asynchronous setup](#example-of-synchronous-and-asynchronous-setup)
+* [Error Handling](#error-handling)
+  * [Handling transition errors](#handling-transition-errors)
 * [Animations](#animations)
   * [What is ITransitionAnimation](#what-is-itransitionanimation)
   * [What is IWindowAnimation](#what-is-iwindowanimation)
@@ -162,6 +164,28 @@ var request4 = TransitionRequest.Of<GameWindow>(TransitionType.Add)
     );
 ```
 
+---
+
+## Error Handling
+
+### Handling transition errors
+Sometimes window transitions can fail (e.g., failing to load a prefab or an exception thrown during window setup). `WindowManager` handles cleaning up internally, but you may want to know when a transition fails so you can alert the user or log the error.
+You can use the `ErrorHandler` delegate for this purpose:
+
+```csharp
+// Setup an error handler for the WindowManager
+manager.ErrorHandler = async (exception) =>
+{
+    Debug.LogError($"Window transition failed: {exception.Message}");
+    
+    // You can optionally show a popup window or perform other async tasks here
+    var popupRequest = TransitionRequest.Of<ErrorPopup>(TransitionType.Add)
+        .Setup(new ErrorModel { Message = exception.Message }, (w, m) => w.ShowError(m));
+        
+    await manager.Transite(popupRequest);
+};
+```
+Clean-up will be performed after handler finishes
 ---
 
 ## Animations
