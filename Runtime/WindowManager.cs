@@ -129,7 +129,7 @@ namespace Damdor.Finestrio
                     windowSource.Destroy(target);
                 }
 
-                if (source != null) windows.Add(source);
+                if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
 
                 throw;
@@ -157,7 +157,7 @@ namespace Damdor.Finestrio
             }
             catch (Exception)
             {
-                if (source != null) windows.Add(source);
+                if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
                 
                 throw;
@@ -174,16 +174,23 @@ namespace Damdor.Finestrio
             var animation = GetTransitionAnimation(request, source, target, request.TransitionType);
             var shouldRevertWindowsForAnimation = animation != null && source != null && target != null &&
                                       ShouldRevertWindowsForAnimation(request.TransitionType, animation.Order);
-           
-            if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
-            if (animation != null) await animation.Prepare();
-            await request.RetrieveAllModels(cancellationToken);
-            await request.SetupAllModels(target, cancellationToken);
-            if (animation != null)
+
+            try
             {
-                await animation.Play();
+                if (shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
+                if (animation != null) await animation.Prepare();
+                await request.RetrieveAllModels(cancellationToken);
+                await request.SetupAllModels(target, cancellationToken);
+                if (animation != null)
+                {
+                    await animation.Play();
+                }
             }
-            if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
+            finally
+            {
+                if (shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
+            }
+
         }
 
         private static ITransitionAnimation GetTransitionAnimation<TWindow>(
