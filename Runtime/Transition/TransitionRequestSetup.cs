@@ -5,49 +5,38 @@ namespace Damdor.Finestrio
 {
     internal abstract class TransitionRequestSetup<TWindow> where TWindow : Window
     {
-        public abstract bool IsReadyToSyncSetup { get; }
-        public abstract void Retrieve(CancellationToken cancellationToken);
+        public abstract UniTask Retrieve(CancellationToken cancellationToken);
         public abstract UniTask Setup(TWindow window, CancellationToken cancellationToken);
         public abstract void Reset();
     }
 
     internal class TransitionRequestSetup<TWindow, TModel> : TransitionRequestSetup<TWindow> where TWindow : Window
     {
-        public override bool IsReadyToSyncSetup => IsRetrieved && setup != null;
-        private bool IsRetrieved => retrieveAsync == null || modelRetrieved;
-        
         private TModel model;
-        private bool modelRetrieved;
         private TransitionRequestModelRetrieveAsync<TModel> retrieveAsync;
         private TransitionRequestModelSetup<TWindow, TModel> setup;
         private TransitionRequestModelSetupAsync<TWindow, TModel> setupAsync;
 
-        public override void Retrieve(CancellationToken cancellationToken)
+        public override UniTask Retrieve(CancellationToken cancellationToken)
         {
-            if (IsRetrieved) return;
-            RetrieveAsync(cancellationToken).Forget();
+            if (retrieveAsync == null) return UniTask.CompletedTask;
+            return RetrieveAsync(cancellationToken);
         }
         
         public override UniTask Setup(TWindow window, CancellationToken cancellationToken)
         {
-            if (IsReadyToSyncSetup)
+            if (setup != null)
             {
                 setup(window, model);
                 return UniTask.CompletedTask;
             }
 
-            if (IsRetrieved)
+            if (setupAsync != null)
             {
-                setupAsync(window, model, cancellationToken);
+                return setupAsync(window, model, cancellationToken);
             }
-            
-            return UniTask.WaitUntil(() => IsRetrieved, cancellationToken: cancellationToken)
-                .ContinueWith(() =>
-                {
-                    if(setupAsync != null) return setupAsync(window, model, cancellationToken);
-                    setup(window, model);
-                    return UniTask.CompletedTask;
-                });
+
+            return UniTask.CompletedTask;
         }
 
         public void Set(TModel model, TransitionRequestModelSetup<TWindow, TModel> setup)
@@ -80,13 +69,11 @@ namespace Damdor.Finestrio
             retrieveAsync = null;
             setup = null;
             setupAsync = null;
-            modelRetrieved = false;
         }
         
-        private async UniTask RetrieveAsync(CancellationToken cancelToken)
+        private async UniTask RetrieveAsync(CancellationToken cancellationToken)
         {
-            model = await retrieveAsync(cancelToken);
-            modelRetrieved = true;
+            model = await retrieveAsync(cancellationToken);
         }
 
     }

@@ -74,14 +74,30 @@ namespace Damdor.Finestrio
             TransitionRequest<TWindow> request,
             CancellationToken cancellationToken) where TWindow : Window
         {
-            var source = windows.Count > 0 ? windows[^1] : null;
-            var target = await windowSource.Create<TWindow>();
-            windows.Add(target);
-            target.IndexOnStack = windows.Count;
-            
-            await SetupAndAnimate(request, source, target, cancellationToken);
-            UpdateVisibilities();
-            
+            TWindow target = null;
+
+            try
+            {
+                var source = windows.Count > 0 ? windows[^1] : null;
+                target = await windowSource.Create<TWindow>();
+                windows.Add(target);
+                target.IndexOnStack = windows.Count;
+
+                await SetupAndAnimate(request, source, target, cancellationToken);
+                UpdateVisibilities();
+            }
+            catch (Exception)
+            {
+                if (target != null)
+                {
+                    windows.Remove(target);
+                    windowSource.Destroy(target);
+                }
+                
+                UpdateVisibilities();
+                throw;
+            }
+
             return target;
         }
         
@@ -130,7 +146,7 @@ namespace Damdor.Finestrio
            
             if(shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
             if (animation != null) await animation.Prepare();
-            request.RetrieveAllModels(cancellationToken);
+            await request.RetrieveAllModels(cancellationToken);
             await request.SetupAllModels(target, cancellationToken);
             if (animation != null)
             {

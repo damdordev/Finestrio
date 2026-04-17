@@ -157,54 +157,36 @@ namespace Damdor.Finestrio
             GetAnimation = null;
         }
 
-        internal void RetrieveAllModels(CancellationToken cancellationToken)
+        internal UniTask RetrieveAllModels(CancellationToken cancellationToken) => setup.Count switch
         {
-            foreach (var s in setup)
-            {
-                s.Retrieve(cancellationToken);
-            }
-        }
-        
-        internal UniTask SetupAllModels(TWindow window, CancellationToken cancellationToken)
+            0 => UniTask.CompletedTask,
+            1 => setup[0].Retrieve(cancellationToken),
+            2 => UniTask.WhenAll(
+                setup[0].Retrieve(cancellationToken),
+                setup[1].Retrieve(cancellationToken)
+            ),
+            3 => UniTask.WhenAll(
+                setup[0].Retrieve(cancellationToken),
+                setup[1].Retrieve(cancellationToken),
+                setup[2].Retrieve(cancellationToken)
+            ),
+            _ => UniTask.WhenAll(setup.Select(s => s.Retrieve(cancellationToken)))
+        };
+
+        internal UniTask SetupAllModels(TWindow window, CancellationToken cancellationToken) => setup.Count switch
         {
-            if (ReadyToSyncSetup())
-            {
-                SetupAllModelsSync(window, cancellationToken);
-                return UniTask.CompletedTask;
-            }
-
-            if (setup.Count == 1)
-            {
-                return setup[0].Setup(window, cancellationToken);
-            }
-            
-            return SetupAllModelsAsync(window, cancellationToken);
-        }
-
-        private void SetupAllModelsSync(TWindow window, CancellationToken cancellationToken)
-        {
-            foreach (var s in setup)
-            {
-                s.Setup(window, cancellationToken).Forget();
-            }
-        }
-
-        private async UniTask SetupAllModelsAsync(TWindow window, CancellationToken cancellationToken)
-        {
-            foreach (var s in setup)
-            {
-                await s.Setup(window, cancellationToken);
-            }
-        }
-
-        private bool ReadyToSyncSetup()
-        {
-            foreach (var s in setup)
-            {
-                if (!s.IsReadyToSyncSetup) return false;
-            }
-
-            return true;
-        }
+            0 => UniTask.CompletedTask,
+            1 => setup[0].Setup(window, cancellationToken),
+            2 => UniTask.WhenAll(
+                setup[0].Setup(window, cancellationToken),
+                setup[1].Setup(window, cancellationToken)
+            ),
+            3 => UniTask.WhenAll(
+                setup[0].Setup(window, cancellationToken),
+                setup[1].Setup(window, cancellationToken),
+                setup[2].Setup(window, cancellationToken)
+            ),
+            _ => UniTask.WhenAll(setup.Select(s => s.Setup(window, cancellationToken)))
+        };
     }
 }

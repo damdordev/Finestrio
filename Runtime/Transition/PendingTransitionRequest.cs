@@ -15,8 +15,8 @@ namespace Damdor.Finestrio
         private ITransitionRequestQueueReceiver receiver;
         private TransitionRequest<TWindow> request;
         private Action onFinish;
-        private UniTaskCompletionSource<TWindow> tcs;
         private CancellationToken cancellationToken;
+        private bool started;
 
         public void Setup(
             ITransitionRequestQueueReceiver receiver,
@@ -28,17 +28,24 @@ namespace Damdor.Finestrio
             this.request = request;
             this.onFinish = onFinish;
             this.cancellationToken = cancellationToken;
-            tcs = new UniTaskCompletionSource<TWindow>();
         }
 
-        public UniTask<TWindow> Wait()
+        public async UniTask<TWindow> Wait()
         {
-            return tcs.Task;
+            await UniTask.WaitUntil(() => started, cancellationToken: cancellationToken);
+            try
+            {
+                return await receiver.ProcessRequest(request, cancellationToken);
+            }
+            finally
+            {
+                onFinish?.Invoke();
+            }
         }
 
         public override void Run()
         {
-            receiver.ProcessRequest(request, cancellationToken).ContinueWith(OnFinish);
+            started = true;
         }
 
         public override void Reset()
@@ -47,14 +54,8 @@ namespace Damdor.Finestrio
             receiver = null;
             request = null;
             onFinish = null;
-            tcs = null;
             cancellationToken = CancellationToken.None;
-        }
-
-        private void OnFinish(TWindow window)
-        {
-            tcs.TrySetResult(window);
-            onFinish?.Invoke();
+            started = false;
         }
         
     }
