@@ -6,6 +6,59 @@ using UnityEngine;
 
 namespace Damdor.Finestrio
 {
+    public class WindowCallbacks
+    {
+        /// <summary>
+        /// Invoked when the top-most window in the stack changes. The callback receives the new top window, which can be null if the last window is removed.
+        /// </summary>
+        public event Action<Window> TopWindowChanged;
+
+        /// <summary>
+        /// Invoked when a new window is created and added to the stack.
+        /// </summary>
+        public event Action<Window> WindowCreated;
+
+        /// <summary>
+        /// Invoked when a window is destroyed and removed from the stack.
+        /// </summary>
+        public event Action<Window> BeforeWindowDestroyed;
+
+        /// <summary>
+        /// Invoked when a window is paused (e.g., a new window is pushed on top of it).
+        /// </summary>
+        public event Action<Window> WindowPaused;
+
+        /// <summary>
+        /// Invoked when a window is resumed (e.g., the window on top of it is removed).
+        /// </summary>
+        public event Action<Window> WindowResumed;
+
+        internal void NotifyTopWindowChanged(Window window)
+        {
+            TopWindowChanged?.Invoke(window);
+        }
+
+        internal void NotifyWindowCreated(Window window)
+        {
+            WindowCreated?.Invoke(window);
+        }
+
+        internal void NotifyBeforeWindowDestroyed(Window window)
+        {
+            BeforeWindowDestroyed?.Invoke(window);
+        }
+
+        internal void NotifyOnWindowPaused(Window window)
+        {
+            WindowPaused?.Invoke(window);
+        }
+
+        internal void NotifyOnWindowResumed(Window window)
+        {
+            WindowResumed?.Invoke(window);
+        }
+    }
+
     /// <summary>
     /// Central manager responsible for the lifecycle, state, and transition queueing of windows.
     /// Manages an internal stack of active windows and orchestrates transitions using an <see cref="IWindowSource"/>.
@@ -34,7 +87,12 @@ namespace Damdor.Finestrio
         /// Default behavior (reverting broken transition) will be performed after handler finishes
         /// </summary>
         public TransitionErrorHandler ErrorHandler { get; set; }
-        
+
+        /// <summary>
+        /// Provides access to various lifecycle events of the windows.
+        /// </summary>
+        public WindowCallbacks Callbacks { get; } = new();
+
         private readonly List<Window> windows = new();
         
         private readonly IWindowSource windowSource;
@@ -83,6 +141,7 @@ namespace Damdor.Finestrio
             CancellationToken cancellationToken) where TWindow : Window
         {
             TWindow target = null;
+            var oldTop = TopWindow;
 
             try
             {
@@ -90,20 +149,26 @@ namespace Damdor.Finestrio
                 target = await windowSource.Create<TWindow>();
                 windows.Add(target);
                 target.IndexOnStack = windows.Count;
+                Callbacks.NotifyWindowCreated(target);
 
                 await SetupAndAnimate(request, source, target, cancellationToken);
                 UpdateVisibilities();
+                if(oldTop != null) Callbacks.NotifyOnWindowPaused(oldTop);
+                Callbacks.NotifyTopWindowChanged(TopWindow);
             }
             catch (Exception e)
             {
                 await HandleException(e, cancellationToken);
                 if (target != null)
                 {
+                    Callbacks.NotifyBeforeWindowDestroyed(target);
                     windows.Remove(target);
                     windowSource.Destroy(target);
                 }
                 
                 UpdateVisibilities();
+                if(oldTop != null && oldTop != TopWindow) Callbacks.NotifyOnWindowResumed(oldTop);
+                Callbacks.NotifyTopWindowChanged(TopWindow);
                 throw;
             }
 
@@ -116,31 +181,40 @@ namespace Damdor.Finestrio
         {
             TWindow target = null;
             Window source = null;
+            var oldTop = TopWindow;
 
             try
             {
                 source = windows.Count > 0 ? windows[^1] : null;
                 target = await windowSource.Create<TWindow>();
                 target.IndexOnStack = windows.Count;
+                Callbacks.NotifyWindowCreated(target);
 
                 if (source != null) windows.Remove(source);
                 windows.Add(target);
 
                 await SetupAndAnimate(request, source, target, cancellationToken);
-                if (source != null) windowSource.Destroy(source);
+                if (source != null)
+                {
+                    Callbacks.NotifyBeforeWindowDestroyed(source);
+                    windowSource.Destroy(source);
+                }
                 UpdateVisibilities();
+                Callbacks.NotifyTopWindowChanged(TopWindow);
             }
             catch (Exception e)
             {
                 await HandleException(e, cancellationToken);
                 if (target != null)
                 {
+                    Callbacks.NotifyBeforeWindowDestroyed(target);
                     windows.Remove(target);
                     windowSource.Destroy(target);
                 }
 
                 if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
+                Callbacks.NotifyTopWindowChanged(TopWindow);
 
                 throw;
             }
@@ -153,6 +227,7 @@ namespace Damdor.Finestrio
             CancellationToken cancellationToken) where TWindow : Window
         {
             Window source = null;
+            var oldTop = TopWindow;
 
             try
             {
@@ -162,14 +237,21 @@ namespace Damdor.Finestrio
 
                 await SetupAndAnimate(request, source, target, cancellationToken);
 
-                if (source != null) windowSource.Destroy(source);
+                if (source != null)
+                {
+                    Callbacks.NotifyBeforeWindowDestroyed(source);
+                    windowSource.Destroy(source);
+                }
                 UpdateVisibilities();
+                if(TopWindow != null) Callbacks.NotifyOnWindowResumed(TopWindow);
+                Callbacks.NotifyTopWindowChanged(TopWindow);
             }
             catch (Exception e)
             {
                 await HandleException(e, cancellationToken);
                 if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
+                Callbacks.NotifyTopWindowChanged(TopWindow);
                 
                 throw;
             }

@@ -12,6 +12,8 @@
   * [Simple synchronous setup](#simple-synchronous-setup)
 * [Setup](#setup)
   * [Example of synchronous and asynchronous setup](#example-of-synchronous-and-asynchronous-setup)
+* [Callbacks](#callbacks)
+  * [Listening to window lifecycle events](#listening-to-window-lifecycle-events)
 * [Error Handling](#error-handling)
   * [Handling transition errors](#handling-transition-errors)
 * [Animations](#animations)
@@ -163,6 +165,48 @@ var request4 = TransitionRequest.Of<GameWindow>(TransitionType.Add)
         setup: async (window, model, token) => await window.InitAsync(model, token)
     );
 ```
+
+---
+
+## Callbacks
+
+### Listening to window lifecycle events
+`WindowManager` provides a `Callbacks` property that allows you to subscribe to key window lifecycle events. This is useful for analytics, state management, or other cross-cutting concerns.
+
+```csharp
+// Subscribe to an event
+manager.Callbacks.TopWindowChanged += (newTopWindow) => 
+{
+    Debug.Log($"Top window is now: {newTopWindow?.GetType().Name ?? "None"}");
+};
+
+manager,Callbacks.WindowCreated += (createdWindow) => 
+{
+    Debug.Log($"Window created: {createdWindow.GetType().Name}");
+};
+
+manager.Callbacks.BeforeWindowDestroyed += (destroyedWindow) => 
+{
+    Debug.Log($"Window destroyed: {destroyedWindow.GetType().Name}");
+};
+
+manager.Callbacks.WindowPaused += (pausedWindow) => 
+{
+    Debug.Log($"Window paused: {pausedWindow.GetType().Name}");
+};
+
+manager.Callbacks.WindowResumed += (resumedWindow) => 
+{
+    Debug.Log($"Window resumed: {resumedWindow.GetType().Name}");
+};
+```
+
+Available callbacks:
+- `TopWindowChanged`: Invoked when the top-most window in the stack changes.
+- `WindowCreated`: Invoked when a new window is created and added to the stack.
+- `BeforeWindowDestroyed`: Invoked before a window is destroyed and removed from the stack.
+- `WindowPaused`: Invoked when a window is paused (e.g., a new window is pushed on top of it).
+- `WindowResumed`: Invoked when a window is resumed (e.g., the window on top of it is removed).
 
 ---
 
