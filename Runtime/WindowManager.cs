@@ -33,6 +33,12 @@ namespace Damdor.Finestrio
         /// </summary>
         public event Action<Window> WindowResumed;
 
+        /// <summary>
+        /// Invoked when the overall transparency state of the window stack changes.
+        /// True if the stack is transparent, false otherwise.
+        /// </summary>
+        public event Action<bool> TransparencyChanged;
+
         internal void NotifyTopWindowChanged(Window window)
         {
             TopWindowChanged?.Invoke(window);
@@ -57,6 +63,12 @@ namespace Damdor.Finestrio
         {
             WindowResumed?.Invoke(window);
         }
+
+        internal void NotifyTransparencyChanged(bool isTransparent)
+        {
+            TransparencyChanged?.Invoke(isTransparent);
+        }
+        
     }
 
     /// <summary>
@@ -80,6 +92,22 @@ namespace Damdor.Finestrio
         /// Retrieves the currently active and topmost window in the stack.
         /// </summary>
         public Window TopWindow => windows.Count > 0 ? windows[^1] : null;
+
+        /// <summary>
+        /// Indicates whether the current window stack is transparent.
+        /// A transparent stack means that the background (e.g., the 3D game view) behind the UI is visible.
+        /// <see cref="Callbacks.TransparencyChanged"/>
+        /// </summary>
+        public bool IsTransparent
+        {
+            get => isTransparent;
+            private set
+            {
+                if (isTransparent == value) return;
+                isTransparent = value;
+                Callbacks.NotifyTransparencyChanged(isTransparent);
+            }
+        }
         
         /// <summary>
         /// An optional callback invoked when an exception occurs during window transitions.
@@ -94,6 +122,7 @@ namespace Damdor.Finestrio
         public WindowCallbacks Callbacks { get; } = new();
 
         private readonly List<Window> windows = new();
+        private bool isTransparent;
         
         private readonly IWindowSource windowSource;
         private readonly TransitionRequestQueue requestQueue;
@@ -274,7 +303,7 @@ namespace Damdor.Finestrio
             }
         }
 
-        private static async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
+        private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
             where TWindow : Window
         {
             source?.SetVisible(true);
@@ -286,7 +315,11 @@ namespace Damdor.Finestrio
             try
             {
                 if (shouldRevertWindowsForAnimation) RevertWindowsForAnimations(source, target);
-                if (animation != null) await animation.Prepare();
+                if (animation != null)
+                {
+                    UpdateTransparency(source, target);
+                    await animation.Prepare();
+                }
                 await request.RetrieveAllModels(cancellationToken);
                 await request.SetupAllModels(target, cancellationToken);
                 if (animation != null)
@@ -334,6 +367,25 @@ namespace Damdor.Finestrio
                 windows[i].SetVisible(!wasFullscreenWindow);
                 if (!windows[i].IsTransparent) wasFullscreenWindow = true;
             }
+
+            UpdateTransparency();
         }
+
+        private void UpdateTransparency(Window windowInAnimation = null, Window otherWindowInAnimation = null)
+        {
+            for (var i = 0; i < windows.Count; ++i)
+            {
+                var window = windows[i];
+                var isTransparent = window.IsTransparent || window == windowInAnimation || window == otherWindowInAnimation;
+                if (!isTransparent)
+                {
+                    IsTransparent = false;
+                    return;
+                }
+            }
+
+            IsTransparent = true;
+        }
+        
     }
 }

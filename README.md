@@ -28,6 +28,8 @@
   * [Available animations: SequentioWindowAnimation](#available-animations-sequentiowindowanimation)
 * [WindowSource](#windowsource)
   * [How to implement own window source](#how-to-implement-own-window-source)
+* [Transparency](#transparency)
+  * [Tracking stack transparency](#tracking-stack-transparency)
 
 ---
 
@@ -180,7 +182,7 @@ manager.Callbacks.TopWindowChanged += (newTopWindow) =>
     Debug.Log($"Top window is now: {newTopWindow?.GetType().Name ?? "None"}");
 };
 
-manager,Callbacks.WindowCreated += (createdWindow) => 
+manager.Callbacks.WindowCreated += (createdWindow) => 
 {
     Debug.Log($"Window created: {createdWindow.GetType().Name}");
 };
@@ -199,6 +201,11 @@ manager.Callbacks.WindowResumed += (resumedWindow) =>
 {
     Debug.Log($"Window resumed: {resumedWindow.GetType().Name}");
 };
+
+manager.Callbacks.TransparencyChanged += (isTransparent) => 
+{
+    Debug.Log($"Stack transparency changed. Is transparent: {isTransparent}");
+};
 ```
 
 Available callbacks:
@@ -207,6 +214,7 @@ Available callbacks:
 - `BeforeWindowDestroyed`: Invoked before a window is destroyed and removed from the stack.
 - `WindowPaused`: Invoked when a window is paused (e.g., a new window is pushed on top of it).
 - `WindowResumed`: Invoked when a window is resumed (e.g., the window on top of it is removed).
+- `TransparencyChanged`: Invoked when the overall transparency of the window stack changes.
 
 ---
 
@@ -390,4 +398,22 @@ public class MyCustomWindowSource : IWindowSource
 
 // Usage:
 var manager = new WindowManager(new MyCustomWindowSource());
+```
+
+---
+
+## Transparency
+
+### Tracking stack transparency
+The `WindowManager` exposes an `IsTransparent` property that indicates whether the entire UI stack is transparent. This is evaluated automatically based on the windows currently in the stack and their individual `IsTransparent` values. 
+
+If all active windows are marked as transparent, the manager will set `IsTransparent` to true, meaning underlying layers (such as the 3D game view) are visible. You can track changes to this property using the `Callbacks.TransparencyChanged` event.
+
+```csharp
+// Example usage:
+if (manager.IsTransparent)
+{
+    // The background scene is visible behind the UI
+    Enable3DCameraRendering();
+}
 ```
