@@ -12,5 +12,6 @@
     "url": "https://github.com/damdordev/Finestrio.git"
   },
   "dependencies": {
+    "com.cysharp.unitask.compatible": "2.3.1" 
   }  
 }
