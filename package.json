@@ -12,6 +12,5 @@
     "url": "https://github.com/damdordev/Finestrio.git"
   },
   "dependencies": {
-    "com.damdor.foundation": "1.0.0"
   }  
 }
