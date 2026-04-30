@@ -43,7 +43,7 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The class extending <see cref="IFinestrioWindow"/> to instantiate.</typeparam>
         /// <returns>A UniTask resolving to the created instance of the window.</returns>
         /// <exception cref="ArgumentException">Thrown when no underlying source supports the requested window type.</exception>
-        public UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
+        public UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow
         {
             var source = GetWindowSource(typeof(TWindow));
             return source?.Create<TWindow>() ?? throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");

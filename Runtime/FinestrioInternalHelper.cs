@@ -68,7 +68,7 @@ namespace Damdor.Finestrio
         }
         
         public static PendingTransitionRequest<TWindow> GetPendingTransitionRequest<TWindow>() 
-            where TWindow : MonoBehaviour, IFinestrioWindow
+            where TWindow :  IFinestrioWindow
         {
             var type = typeof(PendingTransitionRequest<TWindow>);
             PendingTransitionRequest<TWindow> request;

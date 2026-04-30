@@ -48,7 +48,7 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The type of Window script component attached to the Addressable prefab.</typeparam>
         /// <returns>A UniTask returning the attached Window script instance.</returns>
         /// <exception cref="ArgumentException">Thrown when an Addressable key does not exist or the prefab does not contain the specified Window component.</exception>
-        public async UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
+        public async UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow
         {
             var path = UpdateAndGetPath(typeof(TWindow));
             if (path == null)
@@ -83,6 +83,27 @@ namespace Damdor.Finestrio
         public void Register<TWindow>(string path) where TWindow : IFinestrioWindow
         {
             typeToPath[typeof(TWindow)] = path;
+        }
+        
+        /// <summary>
+        /// Manually maps a given <see cref="FinestrioWindow"/> type to a specific Addressable string key, overriding attribute metadata.
+        /// </summary>
+        /// <param name="type">The class extending Window to map to the Addressable string key.</typeparam>
+        /// <param name="path">The exact Addressable string key identifying the associated prefab asset.</param>
+        public void Register(Type type, string path)
+        {
+            typeToPath[type] = path;
+        }
+        
+        /// <summary>
+        /// Registers an interface type to resolve to the same Addressable key as the specified implementation class type.
+        /// Useful when windows are requested by interface rather than concrete type.
+        /// </summary>
+        /// <param name="interfaceType">The interface type that acts as an alias or abstraction for the window.</param>
+        /// <param name="classType">The concrete class type (extending Window) whose Addressable key will be used.</param>
+        public void RegisterWithInterface(Type interfaceType, Type classType)
+        {
+            Register(interfaceType, UpdateAndGetPath(classType));
         }
 
         private string UpdateAndGetPath(Type type)

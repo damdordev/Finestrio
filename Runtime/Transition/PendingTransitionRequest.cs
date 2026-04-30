@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -12,7 +11,7 @@ namespace Damdor.Finestrio
     }
     
     internal class PendingTransitionRequest<TWindow> : PendingTransitionRequest 
-        where TWindow : MonoBehaviour, IFinestrioWindow
+        where TWindow : IFinestrioWindow
     {
         private ITransitionRequestQueueReceiver receiver;
         private TransitionRequest<TWindow> request;

@@ -45,7 +45,7 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The type of <see cref="IFinestrioWindow"/> to spawn.</typeparam>
         /// <returns>A UniTask returning the attached script instance of the newly spawned window prefab.</returns>
         /// <exception cref="ArgumentException">Thrown when a registered path is invalid, missing a prefab, or the prefab lacks the appropriate <see cref="IFinestrioWindow"/> script component.</exception>
-        public UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
+        public UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow
         {
             var path = UpdateAndGetPath(typeof(TWindow));
             if (path == null)
@@ -64,8 +64,15 @@ namespace Damdor.Finestrio
             {
                 throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from resource: prefab {path} has not window");
             }
+
+            var windowInstanceMono = Object.Instantiate(mono, parent);
+            var windowInstance = windowInstanceMono.GetComponent<TWindow>();
             
-            var windowInstance = Object.Instantiate(window, parent);
+            if (windowInstance == null)
+            {
+                Object.Destroy(windowInstanceMono.gameObject);
+                throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from resource: prefab {path} has not window");
+            }
 
             return new UniTask<TWindow>(windowInstance);
         }
@@ -88,6 +95,27 @@ namespace Damdor.Finestrio
         public void Register<TWindow>(string path) where TWindow : IFinestrioWindow
         {
             typeToPath[typeof(TWindow)] = path;
+        }
+        
+        /// <summary>
+        /// Manually maps a given <see cref="FinestrioWindow"/> type to a specific Addressable string key, overriding attribute metadata.
+        /// </summary>
+        /// <param name="type">The class extending Window to map to the Addressable string key.</typeparam>
+        /// <param name="path">The exact Addressable string key identifying the associated prefab asset.</param>
+        public void Register(Type type, string path)
+        {
+            typeToPath[type] = path;
+        }
+        
+        /// <summary>
+        /// Registers an interface type to resolve to the same Resource path as the specified implementation class type.
+        /// Useful when windows are requested by interface rather than concrete type.
+        /// </summary>
+        /// <param name="interfaceType">The interface type that acts as an alias or abstraction for the window.</param>
+        /// <param name="classType">The concrete class type (extending Window) whose resource path will be used.</param>
+        public void RegisterWithInterface(Type interfaceType, Type classType)
+        {
+            Register(interfaceType, UpdateAndGetPath(classType));
         }
 
         private string UpdateAndGetPath(Type type)

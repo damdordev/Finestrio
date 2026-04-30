@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -28,7 +27,7 @@ namespace Damdor.Finestrio
         /// </summary>
         /// <typeparam name="TWindow">The specific window class deriving from <see cref="IFinestrioWindow"/>.</typeparam>
         /// <returns>A UniTask resolving to the initialized window instance.</returns>
-        UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow;
+        UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow;
         
         /// <summary>
         /// Cleans up and destroys the specified window instance.

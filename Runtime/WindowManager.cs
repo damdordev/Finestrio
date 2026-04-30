@@ -144,7 +144,7 @@ namespace Damdor.Finestrio
         /// <param name="request">The prepared request containing models, setups, and transition type details.</param>
         /// <returns>A UniTask resolving to the initialized and visible window instance upon transition completion.</returns>
         public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request)
-            where TWindow : MonoBehaviour, IFinestrioWindow 
+            where TWindow : IFinestrioWindow 
             => requestQueue.Enqueue(request);
 
         /// <summary>
@@ -168,9 +168,9 @@ namespace Damdor.Finestrio
 
         private async UniTask<TWindow> ProcessAdd<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
+            CancellationToken cancellationToken) where TWindow : IFinestrioWindow
         {
-            TWindow target = null;
+            TWindow target = default;
             var oldTop = TopFinestrioWindow;
 
             try
@@ -207,9 +207,9 @@ namespace Damdor.Finestrio
         
         private async UniTask<TWindow> ProcessChange<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
+            CancellationToken cancellationToken) where TWindow : IFinestrioWindow
         {
-            TWindow target = null;
+            TWindow target = default;
             IFinestrioWindow source = null;
             var oldTop = TopFinestrioWindow;
 
@@ -254,7 +254,7 @@ namespace Damdor.Finestrio
         
         private async UniTask<TWindow> ProcessBack<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
+            CancellationToken cancellationToken) where TWindow : IFinestrioWindow
         {
             IFinestrioWindow source = null;
             var oldTop = TopFinestrioWindow;
@@ -262,7 +262,7 @@ namespace Damdor.Finestrio
             try
             {
                 source = windows.Count > 0 ? windows[^1] : null;
-                var target = windows.Count > 1 ? (TWindow)windows[^2] : null;
+                var target = windows.Count > 1 ? (TWindow)windows[^2] : default;
                 if (source != null) windows.Remove(source);
 
                 await SetupAndAnimate(request, source, target, cancellationToken);

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -19,7 +18,7 @@ namespace Damdor.Finestrio
         }
         
         public UniTask<TWindow> Enqueue<TWindow>(TransitionRequest<TWindow> request) 
-            where TWindow : MonoBehaviour, IFinestrioWindow
+            where TWindow : IFinestrioWindow
         {
             var pendingRequest = FinestrioInternalHelper.GetPendingTransitionRequest<TWindow>();
             pendingRequest.Setup(receiver, request, cancellationTokenSource.Token, OnRequestFinished);
