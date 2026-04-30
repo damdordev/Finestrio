@@ -33,10 +33,10 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Begins constructing a new transition request for a specified window type.
         /// </summary>
-        /// <typeparam name="TWindow">The type of <see cref="Window"/> this request targets.</typeparam>
+        /// <typeparam name="TWindow">The type of <see cref="IFinestrioWindow"/> this request targets.</typeparam>
         /// <param name="transitionType">The operation to perform (e.g., Add, Change, Back).</param>
         /// <returns>A typed <see cref="TransitionRequest{TWindow}"/> builder object.</returns>
-        public static TransitionRequest<TWindow> Of<TWindow>(TransitionType transitionType) where TWindow : Window
+        public static TransitionRequest<TWindow> Of<TWindow>(TransitionType transitionType) where TWindow : IFinestrioWindow
             => FinestrioInternalHelper.GetTransitionRequest<TWindow>(transitionType);
     }
     
@@ -52,7 +52,7 @@ namespace Damdor.Finestrio
     ///     .Animation((source, target, type) => myCustomAnimation);
     /// </code>
     /// </example>
-    public class TransitionRequest<TWindow> : TransitionRequest where TWindow : Window
+    public class TransitionRequest<TWindow> : TransitionRequest where TWindow : IFinestrioWindow
     {
         internal TransitionType TransitionType { get; private set; }
         internal TransitionRequestAnimationGetter<TWindow> GetAnimation { get; private set; }

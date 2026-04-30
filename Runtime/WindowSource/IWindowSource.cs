@@ -1,5 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -25,14 +26,14 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Asynchronously instantiates a window of the given type.
         /// </summary>
-        /// <typeparam name="TWindow">The specific window class deriving from <see cref="Window"/>.</typeparam>
+        /// <typeparam name="TWindow">The specific window class deriving from <see cref="IFinestrioWindow"/>.</typeparam>
         /// <returns>A UniTask resolving to the initialized window instance.</returns>
-        UniTask<TWindow> Create<TWindow>() where TWindow : Window;
+        UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow;
         
         /// <summary>
         /// Cleans up and destroys the specified window instance.
         /// </summary>
-        /// <param name="window">The window to be destroyed.</param>
-        void Destroy(Window window);
+        /// <param name="finestrioWindow">The window to be destroyed.</param>
+        void Destroy(IFinestrioWindow finestrioWindow);
     }
 }

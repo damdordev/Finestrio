@@ -30,8 +30,8 @@ namespace Damdor.Finestrio
         /// <param name="order">The required layer ordering during the transition, or Default to auto-calculate.</param>
         /// <returns>A pooled instance of <see cref="CompoundTransitionAnimation"/> prepared to animate.</returns>
         public static CompoundTransitionAnimation Combine(
-            Window source, 
-            Window target, 
+            IFinestrioWindow source, 
+            IFinestrioWindow target, 
             TransitionType transitionType,
             WindowOrderInAnimation order = WindowOrderInAnimation.Default)
         {
@@ -113,7 +113,7 @@ namespace Damdor.Finestrio
             };
         }
 
-        private static IWindowAnimation GetDefaultSourceAnimation(Window source, TransitionType transitionType)
+        private static IWindowAnimation GetDefaultSourceAnimation(IFinestrioWindow source, TransitionType transitionType)
         {
             if (source == null) return null;
             return transitionType switch
@@ -125,7 +125,7 @@ namespace Damdor.Finestrio
             };
         }
         
-        private static IWindowAnimation GetDefaultTargetAnimation(Window target, TransitionType transitionType)
+        private static IWindowAnimation GetDefaultTargetAnimation(IFinestrioWindow target, TransitionType transitionType)
         {
             if (target == null) return null;
             return transitionType switch

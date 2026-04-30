@@ -3,18 +3,18 @@ using UnityEngine;
 namespace Damdor.Finestrio
 {
     [RequireComponent(typeof(Canvas))]
-    public class CanvasWindow : Window
+    public class CanvasFinestrioWindow : MonoBehaviour, IFinestrioWindow
     {
         /// <summary>
         /// Indicates whether windows positioned below this window on the stack should remain visible (not automatically paused or hidden).
         /// Configurable in the Inspector via the isTransparent property.
         /// </summary>
-        public override bool IsTransparent => isTransparent;
+        public bool IsTransparent => isTransparent;
 
         /// <summary>
         /// Gets or sets the visual depth ordering of this window on the Canvas.
         /// </summary>
-        public override int IndexOnStack
+        public int IndexOnStack
         {
             get => GetCanvas().sortingOrder;
             set => GetCanvas().sortingOrder = value;
@@ -30,14 +30,14 @@ namespace Damdor.Finestrio
         /// </summary>
         /// <param name="windowAnimationType">The state of the animation to retrieve (e.g., Add, Remove).</param>
         /// <returns>The assigned <see cref="IWindowAnimation"/> if present, otherwise null.</returns>
-        public override IWindowAnimation GetDefaultWindowAnimation(WindowAnimationType windowAnimationType) 
+        public IWindowAnimation GetDefaultWindowAnimation(WindowAnimationType windowAnimationType) 
             => defaultAnimations.GetDefaultAnimation(windowAnimationType);
 
         /// <summary>
         /// Toggles the active state of the window's GameObject in the Unity hierarchy.
         /// </summary>
         /// <param name="visible">True enables the window object; False disables it.</param>
-        public override void SetVisible(bool visible)
+        public void SetVisible(bool visible)
         {
             gameObject.SetActive(visible);
         }

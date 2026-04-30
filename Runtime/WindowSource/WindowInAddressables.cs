@@ -5,7 +5,7 @@ using System;
 namespace Damdor.Finestrio
 {
     /// <summary>
-    /// Attribute used to decorate a <see cref="Window"/> class with its corresponding Addressable asset key.
+    /// Attribute used to decorate a <see cref="IFinestrioWindow"/> class with its corresponding Addressable asset key.
     /// Enables <see cref="AddressableWindowSource"/> to automatically locate the prefab.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]

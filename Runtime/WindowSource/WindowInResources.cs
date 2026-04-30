@@ -3,7 +3,7 @@ using System;
 namespace Damdor.Finestrio
 {
     /// <summary>
-    /// Attribute used to decorate a <see cref="Window"/> class with its subpath within a Unity 'Resources' directory.
+    /// Attribute used to decorate a <see cref="IFinestrioWindow"/> class with its subpath within a Unity 'Resources' directory.
     /// Enables <see cref="ResourcesWindowSource"/> to automatically load the mapped prefab.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]

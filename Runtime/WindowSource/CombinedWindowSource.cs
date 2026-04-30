@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace Damdor.Finestrio
 {
@@ -39,10 +40,10 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Defers creation of a window to the first configured source that supports the given type.
         /// </summary>
-        /// <typeparam name="TWindow">The class extending <see cref="Window"/> to instantiate.</typeparam>
+        /// <typeparam name="TWindow">The class extending <see cref="IFinestrioWindow"/> to instantiate.</typeparam>
         /// <returns>A UniTask resolving to the created instance of the window.</returns>
         /// <exception cref="ArgumentException">Thrown when no underlying source supports the requested window type.</exception>
-        public UniTask<TWindow> Create<TWindow>() where TWindow : Window
+        public UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
         {
             var source = GetWindowSource(typeof(TWindow));
             return source?.Create<TWindow>() ?? throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");
@@ -51,17 +52,17 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Defers destruction of a window to the source that originally instantiated it (based on its supported type).
         /// </summary>
-        /// <param name="window">The active window instance to clean up.</param>
+        /// <param name="finestrioWindow">The active window instance to clean up.</param>
         /// <exception cref="ArgumentException">Thrown when no underlying source supports destroying the specified window.</exception>
-        public void Destroy(Window window)
+        public void Destroy(IFinestrioWindow finestrioWindow)
         {
-            var source = GetWindowSource(window.GetType());
+            var source = GetWindowSource(finestrioWindow.GetType());
             if (source == null)
             {
-                throw new ArgumentException($"Cannot destroy window {window.GetType().Name}: source not found");
+                throw new ArgumentException($"Cannot destroy window {finestrioWindow.GetType().Name}: source not found");
             }
 
-            source.Destroy(window);
+            source.Destroy(finestrioWindow);
         }
 
         private IWindowSource GetWindowSource(Type type)

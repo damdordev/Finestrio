@@ -3,14 +3,14 @@ using Cysharp.Threading.Tasks;
 
 namespace Damdor.Finestrio
 {
-    internal abstract class TransitionRequestSetup<TWindow> where TWindow : Window
+    internal abstract class TransitionRequestSetup<TWindow> where TWindow : IFinestrioWindow
     {
         public abstract UniTask Retrieve(CancellationToken cancellationToken);
         public abstract UniTask Setup(TWindow window, CancellationToken cancellationToken);
         public abstract void Reset();
     }
 
-    internal class TransitionRequestSetup<TWindow, TModel> : TransitionRequestSetup<TWindow> where TWindow : Window
+    internal class TransitionRequestSetup<TWindow, TModel> : TransitionRequestSetup<TWindow> where TWindow : IFinestrioWindow
     {
         private TModel model;
         private TransitionRequestModelRetrieveAsync<TModel> retrieveAsync;

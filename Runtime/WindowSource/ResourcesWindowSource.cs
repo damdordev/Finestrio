@@ -42,10 +42,10 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Synchronously loads a prefab from Resources and instantiates it asynchronously.
         /// </summary>
-        /// <typeparam name="TWindow">The type of <see cref="Window"/> to spawn.</typeparam>
+        /// <typeparam name="TWindow">The type of <see cref="IFinestrioWindow"/> to spawn.</typeparam>
         /// <returns>A UniTask returning the attached script instance of the newly spawned window prefab.</returns>
-        /// <exception cref="ArgumentException">Thrown when a registered path is invalid, missing a prefab, or the prefab lacks the appropriate <see cref="Window"/> script component.</exception>
-        public UniTask<TWindow> Create<TWindow>() where TWindow : Window
+        /// <exception cref="ArgumentException">Thrown when a registered path is invalid, missing a prefab, or the prefab lacks the appropriate <see cref="IFinestrioWindow"/> script component.</exception>
+        public UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
         {
             var path = UpdateAndGetPath(typeof(TWindow));
             if (path == null)
@@ -73,18 +73,19 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Destroys the instantiated GameObject of the provided window immediately.
         /// </summary>
-        /// <param name="window">The window script attached to the instantiated prefab hierarchy to destroy.</param>
-        public void Destroy(Window window)
+        /// <param name="finestrioWindow">The window script attached to the instantiated prefab hierarchy to destroy.</param>
+        public void Destroy(IFinestrioWindow finestrioWindow)
         {
-            Object.Destroy(window.gameObject);
+            var monoBehaviour = finestrioWindow as MonoBehaviour;
+            if(monoBehaviour != null) Object.Destroy(monoBehaviour.gameObject);
         }
 
         /// <summary>
-        /// Manually registers a specific <see cref="Window"/> type to a Resources subpath, overriding any class attributes.
+        /// Manually registers a specific <see cref="IFinestrioWindow"/> type to a Resources subpath, overriding any class attributes.
         /// </summary>
         /// <typeparam name="TWindow">The class extending Window to associate with the resource string.</typeparam>
         /// <param name="path">The folder path (relative to a 'Resources' directory) to load the prefab from.</param>
-        public void Register<TWindow>(string path) where TWindow : Window
+        public void Register<TWindow>(string path) where TWindow : IFinestrioWindow
         {
             typeToPath[typeof(TWindow)] = path;
         }

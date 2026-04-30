@@ -11,27 +11,27 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Invoked when the top-most window in the stack changes. The callback receives the new top window, which can be null if the last window is removed.
         /// </summary>
-        public event Action<Window> TopWindowChanged;
+        public event Action<IFinestrioWindow> TopWindowChanged;
 
         /// <summary>
         /// Invoked when a new window is created and added to the stack.
         /// </summary>
-        public event Action<Window> WindowCreated;
+        public event Action<IFinestrioWindow> WindowCreated;
 
         /// <summary>
         /// Invoked when a window is destroyed and removed from the stack.
         /// </summary>
-        public event Action<Window> BeforeWindowDestroyed;
+        public event Action<IFinestrioWindow> BeforeWindowDestroyed;
 
         /// <summary>
         /// Invoked when a window is paused (e.g., a new window is pushed on top of it).
         /// </summary>
-        public event Action<Window> WindowPaused;
+        public event Action<IFinestrioWindow> WindowPaused;
 
         /// <summary>
         /// Invoked when a window is resumed (e.g., the window on top of it is removed).
         /// </summary>
-        public event Action<Window> WindowResumed;
+        public event Action<IFinestrioWindow> WindowResumed;
 
         /// <summary>
         /// Invoked when the overall transparency state of the window stack changes.
@@ -39,29 +39,29 @@ namespace Damdor.Finestrio
         /// </summary>
         public event Action<bool> TransparencyChanged;
 
-        internal void NotifyTopWindowChanged(Window window)
+        internal void NotifyTopWindowChanged(IFinestrioWindow finestrioWindow)
         {
-            TopWindowChanged?.Invoke(window);
+            TopWindowChanged?.Invoke(finestrioWindow);
         }
 
-        internal void NotifyWindowCreated(Window window)
+        internal void NotifyWindowCreated(IFinestrioWindow finestrioWindow)
         {
-            WindowCreated?.Invoke(window);
+            WindowCreated?.Invoke(finestrioWindow);
         }
 
-        internal void NotifyBeforeWindowDestroyed(Window window)
+        internal void NotifyBeforeWindowDestroyed(IFinestrioWindow finestrioWindow)
         {
-            BeforeWindowDestroyed?.Invoke(window);
+            BeforeWindowDestroyed?.Invoke(finestrioWindow);
         }
 
-        internal void NotifyOnWindowPaused(Window window)
+        internal void NotifyOnWindowPaused(IFinestrioWindow finestrioWindow)
         {
-            WindowPaused?.Invoke(window);
+            WindowPaused?.Invoke(finestrioWindow);
         }
 
-        internal void NotifyOnWindowResumed(Window window)
+        internal void NotifyOnWindowResumed(IFinestrioWindow finestrioWindow)
         {
-            WindowResumed?.Invoke(window);
+            WindowResumed?.Invoke(finestrioWindow);
         }
 
         internal void NotifyTransparencyChanged(bool isTransparent)
@@ -91,7 +91,7 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Retrieves the currently active and topmost window in the stack.
         /// </summary>
-        public Window TopWindow => windows.Count > 0 ? windows[^1] : null;
+        public IFinestrioWindow TopFinestrioWindow => windows.Count > 0 ? windows[^1] : null;
 
         /// <summary>
         /// Indicates whether the current window stack is transparent.
@@ -121,7 +121,7 @@ namespace Damdor.Finestrio
         /// </summary>
         public WindowCallbacks Callbacks { get; } = new();
 
-        private readonly List<Window> windows = new();
+        private readonly List<IFinestrioWindow> windows = new();
         private bool isTransparent;
         
         private readonly IWindowSource windowSource;
@@ -140,10 +140,11 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Enqueues a window transition request to be processed synchronously or asynchronously based on queue state.
         /// </summary>
-        /// <typeparam name="TWindow">The class extending <see cref="Window"/> targeted by the transition.</typeparam>
+        /// <typeparam name="TWindow">The class extending <see cref="IFinestrioWindow"/> targeted by the transition.</typeparam>
         /// <param name="request">The prepared request containing models, setups, and transition type details.</param>
         /// <returns>A UniTask resolving to the initialized and visible window instance upon transition completion.</returns>
-        public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request) where TWindow : Window 
+        public UniTask<TWindow> Transite<TWindow>(TransitionRequest<TWindow> request)
+            where TWindow : MonoBehaviour, IFinestrioWindow 
             => requestQueue.Enqueue(request);
 
         /// <summary>
@@ -167,10 +168,10 @@ namespace Damdor.Finestrio
 
         private async UniTask<TWindow> ProcessAdd<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : Window
+            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
         {
             TWindow target = null;
-            var oldTop = TopWindow;
+            var oldTop = TopFinestrioWindow;
 
             try
             {
@@ -183,7 +184,7 @@ namespace Damdor.Finestrio
                 await SetupAndAnimate(request, source, target, cancellationToken);
                 UpdateVisibilities();
                 if(oldTop != null) Callbacks.NotifyOnWindowPaused(oldTop);
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
             }
             catch (Exception e)
             {
@@ -196,8 +197,8 @@ namespace Damdor.Finestrio
                 }
                 
                 UpdateVisibilities();
-                if(oldTop != null && oldTop != TopWindow) Callbacks.NotifyOnWindowResumed(oldTop);
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                if(oldTop != null && oldTop != TopFinestrioWindow) Callbacks.NotifyOnWindowResumed(oldTop);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
                 throw;
             }
 
@@ -206,11 +207,11 @@ namespace Damdor.Finestrio
         
         private async UniTask<TWindow> ProcessChange<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : Window
+            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
         {
             TWindow target = null;
-            Window source = null;
-            var oldTop = TopWindow;
+            IFinestrioWindow source = null;
+            var oldTop = TopFinestrioWindow;
 
             try
             {
@@ -229,7 +230,7 @@ namespace Damdor.Finestrio
                     windowSource.Destroy(source);
                 }
                 UpdateVisibilities();
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
             }
             catch (Exception e)
             {
@@ -243,7 +244,7 @@ namespace Damdor.Finestrio
 
                 if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
 
                 throw;
             }
@@ -253,10 +254,10 @@ namespace Damdor.Finestrio
         
         private async UniTask<TWindow> ProcessBack<TWindow>(
             TransitionRequest<TWindow> request,
-            CancellationToken cancellationToken) where TWindow : Window
+            CancellationToken cancellationToken) where TWindow : MonoBehaviour, IFinestrioWindow
         {
-            Window source = null;
-            var oldTop = TopWindow;
+            IFinestrioWindow source = null;
+            var oldTop = TopFinestrioWindow;
 
             try
             {
@@ -272,20 +273,20 @@ namespace Damdor.Finestrio
                     windowSource.Destroy(source);
                 }
                 UpdateVisibilities();
-                if(TopWindow != null) Callbacks.NotifyOnWindowResumed(TopWindow);
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                if(TopFinestrioWindow != null) Callbacks.NotifyOnWindowResumed(TopFinestrioWindow);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
             }
             catch (Exception e)
             {
                 await HandleException(e, cancellationToken);
                 if (source != null && !windows.Contains(source)) windows.Add(source);
                 UpdateVisibilities();
-                Callbacks.NotifyTopWindowChanged(TopWindow);
+                Callbacks.NotifyTopWindowChanged(TopFinestrioWindow);
                 
                 throw;
             }
 
-            return (TWindow) TopWindow;
+            return (TWindow) TopFinestrioWindow;
         }
 
         private async UniTask HandleException(Exception e, CancellationToken cancellationToken)
@@ -303,8 +304,8 @@ namespace Damdor.Finestrio
             }
         }
 
-        private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, Window source, TWindow target, CancellationToken cancellationToken)
-            where TWindow : Window
+        private async UniTask SetupAndAnimate<TWindow>(TransitionRequest<TWindow> request, IFinestrioWindow source, TWindow target, CancellationToken cancellationToken)
+            where TWindow : IFinestrioWindow
         {
             source?.SetVisible(true);
             target?.SetVisible(true);
@@ -335,9 +336,9 @@ namespace Damdor.Finestrio
 
         private static ITransitionAnimation GetTransitionAnimation<TWindow>(
             TransitionRequest<TWindow> request,
-            Window source,
+            IFinestrioWindow source,
             TWindow target,
-            TransitionType transitionType) where TWindow : Window
+            TransitionType transitionType) where TWindow : IFinestrioWindow
             => request.GetAnimation != null
                 ? request.GetAnimation(source, target, transitionType)
                 : CompoundTransitionAnimation.Combine(source, target, transitionType);
@@ -350,7 +351,7 @@ namespace Damdor.Finestrio
                 _ => throw new ArgumentOutOfRangeException(nameof(transitionType), transitionType, null)
             };
 
-        private static void RevertWindowsForAnimations(Window source, Window target)
+        private static void RevertWindowsForAnimations(IFinestrioWindow source, IFinestrioWindow target)
         {
             var sourceIndex = source.IndexOnStack;
             var targetIndex = target.IndexOnStack;
@@ -371,12 +372,12 @@ namespace Damdor.Finestrio
             UpdateTransparency();
         }
 
-        private void UpdateTransparency(Window windowInAnimation = null, Window otherWindowInAnimation = null)
+        private void UpdateTransparency(IFinestrioWindow finestrioWindowInAnimation = null, IFinestrioWindow otherFinestrioWindowInAnimation = null)
         {
             for (var i = 0; i < windows.Count; ++i)
             {
                 var window = windows[i];
-                var isTransparent = window.IsTransparent || window == windowInAnimation || window == otherWindowInAnimation;
+                var isTransparent = window.IsTransparent || window == finestrioWindowInAnimation || window == otherFinestrioWindowInAnimation;
                 if (!isTransparent)
                 {
                     IsTransparent = false;

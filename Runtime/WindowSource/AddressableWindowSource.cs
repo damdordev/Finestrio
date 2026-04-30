@@ -37,7 +37,7 @@ namespace Damdor.Finestrio
         /// <summary>
         /// Evaluates if the provided window class type has an associated Addressable key mapping.
         /// </summary>
-        /// <param name="type">The type of <see cref="Window"/> to verify.</param>
+        /// <param name="type">The type of <see cref="FinestrioWindow"/> to verify.</param>
         /// <returns>True if a key maps to the type via manual registration or attribute, otherwise false.</returns>
         public bool Support(Type type)
             => UpdateAndGetPath(type) != null;
@@ -48,7 +48,7 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The type of Window script component attached to the Addressable prefab.</typeparam>
         /// <returns>A UniTask returning the attached Window script instance.</returns>
         /// <exception cref="ArgumentException">Thrown when an Addressable key does not exist or the prefab does not contain the specified Window component.</exception>
-        public async UniTask<TWindow> Create<TWindow>() where TWindow : Window
+        public async UniTask<TWindow> Create<TWindow>() where TWindow : MonoBehaviour, IFinestrioWindow
         {
             var path = UpdateAndGetPath(typeof(TWindow));
             if (path == null)
@@ -68,18 +68,19 @@ namespace Damdor.Finestrio
         /// Destroys a previously instantiated Addressable window prefab.
         /// Warning: Currently uses Object.Destroy rather than Addressables.ReleaseInstance. Use with care.
         /// </summary>
-        /// <param name="window">The active window script on the Addressable instance to clean up.</param>
-        public void Destroy(Window window)
+        /// <param name="finestrioWindow">The active window script on the Addressable instance to clean up.</param>
+        public void Destroy(IFinestrioWindow finestrioWindow)
         {
-            Object.Destroy(window.gameObject);
+            var monoBehaviour = finestrioWindow as MonoBehaviour;
+            if(monoBehaviour != null) Object.Destroy(monoBehaviour.gameObject);
         }
 
         /// <summary>
-        /// Manually maps a given <see cref="Window"/> type to a specific Addressable string key, overriding attribute metadata.
+        /// Manually maps a given <see cref="FinestrioWindow"/> type to a specific Addressable string key, overriding attribute metadata.
         /// </summary>
         /// <typeparam name="TWindow">The class extending Window to map to the Addressable string key.</typeparam>
         /// <param name="path">The exact Addressable string key identifying the associated prefab asset.</param>
-        public void Register<TWindow>(string path) where TWindow : Window
+        public void Register<TWindow>(string path) where TWindow : IFinestrioWindow
         {
             typeToPath[typeof(TWindow)] = path;
         }
