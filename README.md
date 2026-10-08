@@ -2,6 +2,7 @@
 
 ## Table of Contents
 * [What is Finestrio](#what-is-finestrio)
+* [Installation](#installation)
 * [Base Usage](#base-usage)
   * [Creating manager](#creating-manager)
   * [Creating own window (and putting it in resource)](#creating-own-window-and-putting-it-in-resource)
@@ -35,6 +36,22 @@
 
 ## What is Finestrio
 Finestrio is a modern, asynchronous-first Window and UI Management library for Unity. Built on top of `UniTask`, it offers a clean, robust, and highly flexible architecture for orchestrating UI screens (Windows), their lifecycles, and the transitions between them. It supports multiple loading strategies out of the box, including Unity Resources and Addressables, and provides a powerful animation framework for smooth UI transitions.
+
+## Installation
+
+This package is currently under development. In the future, it will be available via a UPM registry. For now, you can install it using the Git URL.
+
+**Option A: Install via Package Manager window**
+1. In Unity, open **Window** > **Package Manager**.
+2. Click the **+** button and select **Add package from git URL...**
+3. Enter the following URL and click **Add**:
+   `https://github.com/damdordev/Finestrio.git#1.0.0-preview`
+
+**Option B: Install via `manifest.json`**
+Open your project's `Packages/manifest.json` file and add the following line to your `"dependencies"` block:
+```json
+"com.damdor.finestrio": "https://github.com/damdordev/Finestrio.git#1.0.0-preview"
+```
 
 ## Base Usage
 
