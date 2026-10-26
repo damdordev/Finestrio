@@ -22,25 +22,31 @@ namespace Damdor.Finestrio
     /// </example>
     public class AddressableWindowSource : IWindowSource
     {
+        public delegate string PathTransformer(Type windowType, string path, object customParameter);
+        
         private readonly Dictionary<Type, string> typeToPath = new();
         private readonly Transform parent;
+        private readonly PathTransformer pathTransformer;
 
         /// <summary>
         /// Creates an AddressableWindowSource targeting a specified parent transform for newly instantiated prefabs.
         /// </summary>
         /// <param name="parent">The transform under which newly instantiated addressable prefabs will reside.</param>
-        public AddressableWindowSource(Transform parent)
+        /// <param name="pathTransformer">An optional delegate to transform the path before loading the prefab.</param>
+        public AddressableWindowSource(Transform parent, PathTransformer pathTransformer = null)
         {
             this.parent = parent;
+            this.pathTransformer = pathTransformer;
         }
         
         /// <summary>
         /// Evaluates if the provided window class type has an associated Addressable key mapping.
         /// </summary>
         /// <param name="type">The type of <see cref="FinestrioWindow"/> to verify.</param>
+        /// <param name="customParameter">An optional parameter to pass to the window source.</param>
         /// <returns>True if a key maps to the type via manual registration or attribute, otherwise false.</returns>
-        public bool Support(Type type)
-            => UpdateAndGetPath(type) != null;
+        public bool Support(Type type, object customParameter)
+            => UpdateAndGetPath(type, customParameter) != null;
 
         /// <summary>
         /// Asynchronously instantiates the Addressable prefab associated with a given window type.
@@ -48,9 +54,9 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The type of Window script component attached to the Addressable prefab.</typeparam>
         /// <returns>A UniTask returning the attached Window script instance.</returns>
         /// <exception cref="ArgumentException">Thrown when an Addressable key does not exist or the prefab does not contain the specified Window component.</exception>
-        public async UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow
+        public async UniTask<TWindow> Create<TWindow>(object customParameter) where TWindow : IFinestrioWindow
         {
-            var path = UpdateAndGetPath(typeof(TWindow));
+            var path = UpdateAndGetPath(typeof(TWindow), customParameter);
             if (path == null)
             {
                 throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from addressable: path not provided");
@@ -94,21 +100,10 @@ namespace Damdor.Finestrio
         {
             typeToPath[type] = path;
         }
-        
-        /// <summary>
-        /// Registers an interface type to resolve to the same Addressable key as the specified implementation class type.
-        /// Useful when windows are requested by interface rather than concrete type.
-        /// </summary>
-        /// <param name="interfaceType">The interface type that acts as an alias or abstraction for the window.</param>
-        /// <param name="classType">The concrete class type (extending Window) whose Addressable key will be used.</param>
-        public void RegisterWithInterface(Type interfaceType, Type classType)
-        {
-            Register(interfaceType, UpdateAndGetPath(classType));
-        }
 
-        private string UpdateAndGetPath(Type type)
+        private string UpdateAndGetPath(Type type, object customParameter)
         {
-            if (typeToPath.TryGetValue(type, out var path)) return path;
+            if (typeToPath.TryGetValue(type, out var path)) return TransformPath(type, path, customParameter);
             var windowInAddressables = type.GetCustomAttribute<WindowInAddressables>();
             if (windowInAddressables == null)
             {
@@ -117,8 +112,15 @@ namespace Damdor.Finestrio
             }
             
             typeToPath[type] = windowInAddressables.Key;
-            return windowInAddressables.Key;
+            return TransformPath(type, windowInAddressables.Key, customParameter);
         }
+
+        private string TransformPath(Type windowType, string path, object customParameter)
+        {
+            if (pathTransformer == null) return path;
+            return pathTransformer(windowType, path, customParameter);
+        }
+
     }
 }
 

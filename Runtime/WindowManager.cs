@@ -176,7 +176,7 @@ namespace Damdor.Finestrio
             try
             {
                 var source = windows.Count > 0 ? windows[^1] : null;
-                target = await windowSource.Create<TWindow>();
+                target = await windowSource.Create<TWindow>(request.WindowSourceParameter);
                 windows.Add(target);
                 target.IndexOnStack = windows.Count;
                 Callbacks.NotifyWindowCreated(target);
@@ -216,7 +216,7 @@ namespace Damdor.Finestrio
             try
             {
                 source = windows.Count > 0 ? windows[^1] : null;
-                target = await windowSource.Create<TWindow>();
+                target = await windowSource.Create<TWindow>(request.WindowSourceParameter);
                 target.IndexOnStack = windows.Count;
                 Callbacks.NotifyWindowCreated(target);
 

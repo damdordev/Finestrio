@@ -19,15 +19,17 @@ namespace Damdor.Finestrio
         /// Checks if this source can create windows of the specified type.
         /// </summary>
         /// <param name="type">The Type of the window subclass to check.</param>
+        /// <param name="customParameter">An optional parameter to pass to the window source.</param>
         /// <returns>True if the source is capable of instantiating the type, otherwise false.</returns>
-        bool Support(Type type);
+        bool Support(Type type, object customParameter);
         
         /// <summary>
         /// Asynchronously instantiates a window of the given type.
         /// </summary>
         /// <typeparam name="TWindow">The specific window class deriving from <see cref="IFinestrioWindow"/>.</typeparam>
+        /// <param name="customParameter">An optional parameter to pass to the window source.</param>
         /// <returns>A UniTask resolving to the initialized window instance.</returns>
-        UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow;
+        UniTask<TWindow> Create<TWindow>(object customParameter) where TWindow : IFinestrioWindow;
         
         /// <summary>
         /// Cleans up and destroys the specified window instance.

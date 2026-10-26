@@ -56,6 +56,7 @@ namespace Damdor.Finestrio
     {
         internal TransitionType TransitionType { get; private set; }
         internal TransitionRequestAnimationGetter<TWindow> GetAnimation { get; private set; }
+        internal object WindowSourceParameter { get; private set; }
         
         private TransitionType type;
         private readonly List<TransitionRequestSetup<TWindow>> setup = new();
@@ -144,6 +145,18 @@ namespace Damdor.Finestrio
         public TransitionRequest<TWindow> Animation(TransitionRequestAnimationGetter<TWindow> getAnimation)
         {
             GetAnimation = getAnimation;
+            return this;
+        }
+
+        /// <summary>
+        /// Represents a parameter used to specify the source of a window in a windowing system.
+        /// </summary>
+        /// <typeparam name="TWindowSource">The type representing the source of the window.</typeparam>
+        /// <param name="source">The instance defining the window source.</param>
+        /// <returns>An instance of the parameterized type representing the specified window source.</returns>
+        public TransitionRequest<TWindow> WithWindowSourceParameter(object parameter)
+        {
+            WindowSourceParameter = parameter;
             return this;
         }
         

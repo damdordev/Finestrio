@@ -34,8 +34,8 @@ namespace Damdor.Finestrio
         /// </summary>
         /// <param name="type">The type of window class to lookup.</param>
         /// <returns>True if at least one contained source can instantiate the window.</returns>
-        public bool Support(Type type)
-            => GetWindowSource(type) != null;
+        public bool Support(Type type, object customParameter)
+            => GetWindowSource(type, customParameter) != null;
 
         /// <summary>
         /// Defers creation of a window to the first configured source that supports the given type.
@@ -43,10 +43,10 @@ namespace Damdor.Finestrio
         /// <typeparam name="TWindow">The class extending <see cref="IFinestrioWindow"/> to instantiate.</typeparam>
         /// <returns>A UniTask resolving to the created instance of the window.</returns>
         /// <exception cref="ArgumentException">Thrown when no underlying source supports the requested window type.</exception>
-        public UniTask<TWindow> Create<TWindow>() where TWindow : IFinestrioWindow
+        public UniTask<TWindow> Create<TWindow>(object customParameter) where TWindow : IFinestrioWindow
         {
-            var source = GetWindowSource(typeof(TWindow));
-            return source?.Create<TWindow>() ?? throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");
+            var source = GetWindowSource(typeof(TWindow), customParameter);
+            return source?.Create<TWindow>(customParameter) ?? throw new ArgumentException($"Cannot create window {typeof(TWindow).Name}: source not found");
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace Damdor.Finestrio
         /// <exception cref="ArgumentException">Thrown when no underlying source supports destroying the specified window.</exception>
         public void Destroy(IFinestrioWindow finestrioWindow)
         {
-            var source = GetWindowSource(finestrioWindow.GetType());
+            var source = GetWindowSource(finestrioWindow.GetType(), null);
             if (source == null)
             {
                 throw new ArgumentException($"Cannot destroy window {finestrioWindow.GetType().Name}: source not found");
@@ -65,11 +65,11 @@ namespace Damdor.Finestrio
             source.Destroy(finestrioWindow);
         }
 
-        private IWindowSource GetWindowSource(Type type)
+        private IWindowSource GetWindowSource(Type type, object customParameter)
         {
             foreach (var source in windowSources)
             {
-                if (source.Support(type)) return source;
+                if (source.Support(type, customParameter)) return source;
             }
 
             return null;
