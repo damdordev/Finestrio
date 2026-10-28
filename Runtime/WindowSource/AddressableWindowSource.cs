@@ -66,7 +66,7 @@ namespace Damdor.Finestrio
             var window = gameObject.GetComponent<TWindow>();
 
             if (window != null) return window;
-            Object.Destroy(gameObject);
+            Addressables.ReleaseInstance(gameObject);
             throw new ArgumentException($"Cannot create window {typeof(TWindow).Name} from addressable: window not found");
         }
 
@@ -78,7 +78,7 @@ namespace Damdor.Finestrio
         public void Destroy(IFinestrioWindow finestrioWindow)
         {
             var monoBehaviour = finestrioWindow as MonoBehaviour;
-            if(monoBehaviour != null) Object.Destroy(monoBehaviour.gameObject);
+            if(monoBehaviour != null) Addressables.ReleaseInstance(monoBehaviour.gameObject);
         }
 
         /// <summary>
