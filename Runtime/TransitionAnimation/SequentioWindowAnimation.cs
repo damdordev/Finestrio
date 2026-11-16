@@ -17,7 +17,7 @@ namespace Damdor.Finestrio
         /// </summary>
         public override WindowOrderInAnimation Order => order;
         
-        [SerializeField] private Sequence sequence;
+        [SerializeField] private SequencePlayer sequence;
         [SerializeField] private WindowOrderInAnimation order;
         
         /// <summary>
