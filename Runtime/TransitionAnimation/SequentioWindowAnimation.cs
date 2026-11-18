@@ -19,6 +19,7 @@ namespace Damdor.Finestrio
         
         [SerializeField] private SequencePlayer sequence;
         [SerializeField] private WindowOrderInAnimation order;
+        [SerializeField] private PlayDirection direction = PlayDirection.Forward;
         
         /// <summary>
         /// Prepares the sequence by invoking <see cref="Sequence.Init"/> without playing it.
@@ -26,7 +27,11 @@ namespace Damdor.Finestrio
         /// <returns>A completed UniTask after initialization.</returns>
         public override UniTask Prepare()
         {
-           if(sequence != null) sequence.Init();
+           if(sequence != null)
+           {
+               sequence.Settings.Direction = direction;
+               sequence.Init();
+           }
            return UniTask.CompletedTask;
         }
 
